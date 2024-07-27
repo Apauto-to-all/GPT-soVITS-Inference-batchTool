@@ -164,3 +164,4 @@ cython_debug/
 # my
 config
 txt_to_wav.py
+temp

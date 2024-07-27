@@ -10,11 +10,11 @@ class AllFunction:
     # 配置文件路径
     def __init__(self):
         super().__init__()
-        self.config_folder = "config"
-        self.check_folder(self.config_folder)
-        self.check_folder("temp")
-        self.host = "127.0.0.1"
-        self.port = 5000
+        self.config_folder = "config"  # 配置文件夹
+        self.check_folder(self.config_folder)  # 检查配置文件夹是否存在，不存在则创建
+        self.check_folder("temp")  # 临时文件夹，用于保存wav文件，不存在则创建
+        self.host = "127.0.0.1"  # 目标API的host
+        self.port = 5000  # 目标API的端口号
         # 本程序的端口号
         self.local_host = "127.0.0.1"  # 本程序的ip地址，默认为localhost
         self.local_port = 7861  # 本程序的端口号，默认为7860

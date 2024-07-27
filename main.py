@@ -51,8 +51,8 @@ class BatchInference(AllFunction):
             yield wav_file_path  # 返回音频文件路径
 
     def main(self):
-        with gr.Blocks() as demo:
-            gr.Markdown("# GPT-SoVITS抽卡程序")
+        with gr.Blocks(title="抽卡工具") as demo:
+            gr.Markdown("# GPT-soVITS-Inference抽卡工具")
             with gr.Tab(label="设置随机参数"):
                 # 添加一个提示文本
                 gr.Markdown(
@@ -542,7 +542,7 @@ class BatchInference(AllFunction):
                 # 连抽次数设置，抽卡按钮，停止按钮
                 with gr.Row():
                     illation_num_input = gr.Slider(
-                        label="连抽几次",
+                        label="连抽次数",
                         minimum=1,
                         maximum=20,
                         step=1,
@@ -937,9 +937,9 @@ class BatchInference(AllFunction):
             )
 
         demo.launch(
-            server_name=self.local_host,
-            server_port=self.local_port,
-            inbrowser=True,
+            server_name=self.local_host,  # 本地服务器地址
+            server_port=self.local_port,  # 本地服务器端口
+            inbrowser=True,  # 是否在浏览器中打开网站
         )
 
 

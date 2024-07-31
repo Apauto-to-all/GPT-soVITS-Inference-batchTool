@@ -1,5 +1,6 @@
 import os
 import random
+import re
 import time
 import json
 import requests
@@ -9,26 +10,35 @@ import requests
 class AllFunction:
     # 配置文件路径
     def __init__(self):
-        super().__init__()
+        # 创建配置文件夹
         self.config_folder = "config"  # 配置文件夹
         self.check_folder(self.config_folder)  # 检查配置文件夹是否存在，不存在则创建
         self.check_folder("temp")  # 临时文件夹，用于保存wav文件，不存在则创建
+        # 目标API的host和端口号
         self.host = "127.0.0.1"  # 目标API的host
         self.port = 5000  # 目标API的端口号
-        # 本程序的端口号
-        self.local_host = "127.0.0.1"  # 本程序的ip地址，默认为localhost
+        self.url_character_list = (
+            f"http://{self.host}:{self.port}/character_list"  # 获取所有模型的API
+        )
+        self.url_txt_to_wav = f"http://{self.host}:{self.port}/tts"  # 文本转语音的API
+        # 本程序的host和端口号
+        self.local_host = "127.0.0.1"  # 本程序的ip地址，默认为127.0.0.1
         self.local_port = 7861  # 本程序的端口号，默认为7860
+        # 其他设置
+        self.max_prefix_length = 30  # 保存文件名时，最大前缀字符长度
+        self.auto_open_browser = True  # 是否自动打开浏览器，True or False
 
     # 获取文件名储存格式
     def get_filename(self, txt: str) -> str:
         # 获取当前时间戳
         timestamp = str(int(time.time()))
         # 如果txt是多行文本，合并为一行
-        txt = txt.replace("\n", "。")
+        txt = txt.replace("\n", "_")
+        txt = re.sub(r'[\\/:*?"<>|]', "_", txt)
         # 多余的字符用省略号代替
-        if len(txt) > 30:
+        if len(txt) > self.max_prefix_length:
             # 文件名中加入时间戳，确保每次都不同
-            return txt[:30] + "..." + "+" + timestamp
+            return txt[: self.max_prefix_length] + "..." + "+" + timestamp
         else:
             return txt + "+" + timestamp
 

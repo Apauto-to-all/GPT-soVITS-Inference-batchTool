@@ -9,8 +9,6 @@ class BatchInference(AllFunction):
     def __init__(self):
         super().__init__()
         # 读取情感列表
-        self.url_character_list = f"http://{self.host}:{self.port}/character_list"
-        self.url_txt_to_wav = f"http://{self.host}:{self.port}/tts"
         self.all_models_emotions = self.get_model_emotions()
         self.all_models = list(self.all_models_emotions.keys())
         self.stop_flag = False  # 停止标志
@@ -879,7 +877,7 @@ class BatchInference(AllFunction):
         demo.launch(
             server_name=self.local_host,  # 本地服务器地址
             server_port=self.local_port,  # 本地服务器端口
-            inbrowser=True,  # 是否在浏览器中打开网站
+            inbrowser=self.auto_open_browser,  # 是否在浏览器中打开网站
         )
 
 

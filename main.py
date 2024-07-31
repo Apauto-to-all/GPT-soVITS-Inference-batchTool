@@ -36,8 +36,8 @@ class BatchInference(AllFunction):
             gr.update(interactive=False) if is_random else gr.update(interactive=True),
         )
 
-    async def interface(self, mode_name, txt, illation_num=5):
-        all_data = self.get_all_data(mode_name)
+    async def interface(self, model_name, txt, illation_num=5):
+        all_data = self.get_all_data(model_name)
         # 生成推理结果
         random_results = self.random_generate(
             all_data, illation_num
@@ -45,9 +45,9 @@ class BatchInference(AllFunction):
         for selected_result in random_results:
             # 对每个推理结果发送请求并保存音频文件，收集所有文件的路径
             wav_file_path = self.post_txt(
-                txt, mode_name, selected_result
+                txt, model_name, selected_result
             )  # 发送请求，返回音频文件路径
-            await asyncio.sleep(0.1)  # 等待0.05秒
+            await asyncio.sleep(0.1)  # 等待0.1秒
             yield wav_file_path  # 返回音频文件路径
 
     def main(self):
@@ -62,7 +62,7 @@ class BatchInference(AllFunction):
 
                 # 模型选择，下拉框，情感使用，多选框
                 with gr.Row():
-                    mode_name_input = gr.Dropdown(
+                    model_name_input = gr.Dropdown(
                         label="选择模型名称",
                         choices=self.all_models,
                     )
@@ -77,29 +77,29 @@ class BatchInference(AllFunction):
                         )
 
                         # 全选box更新时，更新emotions_input的选项
-                        def update_emotions_all(select_all, mode_name):
+                        def update_emotions_all(select_all, model_name):
                             if select_all:
                                 return gr.update(
-                                    value=self.all_models_emotions[mode_name]
+                                    value=self.all_models_emotions[model_name]
                                 )
                             else:
                                 return gr.update(value=[])
 
                         select_all.change(
                             update_emotions_all,
-                            inputs=[select_all, mode_name_input],
+                            inputs=[select_all, model_name_input],
                             outputs=[emotions_input],
                         )
 
-                        # mode_name_input更新时，更新emotions_input的选项
-                        def update_emotions(mode_name):
+                        # model_name_input更新时，更新emotions_input的选项
+                        def update_emotions(model_name):
                             return gr.update(
-                                choices=self.all_models_emotions[mode_name]
+                                choices=self.all_models_emotions[model_name]
                             )
 
-                        mode_name_input.change(
+                        model_name_input.change(
                             update_emotions,
-                            inputs=[mode_name_input],
+                            inputs=[model_name_input],
                             outputs=[emotions_input],
                         )
 
@@ -573,13 +573,13 @@ class BatchInference(AllFunction):
                 btn_stop.click(stop_generation)
 
                 # 点击按钮后，调用update_audios函数，传入输入组件和输出组件
-                async def update_audios(mode_name, txt, illation_num):
+                async def update_audios(model_name, txt, illation_num):
                     self.stop_flag = False
                     # 初始化输出结果
                     results = [gr.update(visible=False) for _ in range(20)]
                     i = 0
                     async for wav_file_path in self.interface(
-                        mode_name, txt, illation_num
+                        model_name, txt, illation_num
                     ):
                         if self.stop_flag:
                             break
@@ -591,12 +591,14 @@ class BatchInference(AllFunction):
                 # 绑定抽卡按钮的click事件
                 btn_generate.click(
                     update_audios,
-                    inputs=[mode_name_input, txt_input, illation_num_input],
+                    inputs=[model_name_input, txt_input, illation_num_input],
                     outputs=output_audios,
                 )
 
             def save_all_data(  # 定义一个函数来保存所有的数据
-                mode_name,
+                model_name,
+                illation_num,
+                txt,
                 emotions,
                 format,
                 sample_rate,
@@ -641,6 +643,8 @@ class BatchInference(AllFunction):
                 repetition_penalty_max,
                 task_type,
             ):
+                if not model_name:
+                    return
                 betch_size_list = [
                     betch_size_random,
                     betch_size,
@@ -668,7 +672,7 @@ class BatchInference(AllFunction):
                     repetition_penalty_max,
                 ]
                 all_data = {
-                    "model_name": mode_name,
+                    "model_name": model_name,
                     "emotions": emotions,
                     "format": format,
                     "sample_rate": sample_rate,
@@ -689,10 +693,16 @@ class BatchInference(AllFunction):
                     "repetition_penalty": repetition_penalty_list,  # 随机参数repetition_penalty
                     "task_type": task_type,
                 }
+                self.save_last_model(model_name)
+                self.save_illation_num(illation_num)
+                self.save_test_txt(txt)
                 self.save_all_data(all_data)
 
             # 定义一个列表，包含所有组件，除了模型，文本，连抽次数
-            outputs_all_data = [
+            all_input = [
+                model_name_input,
+                illation_num_input,
+                txt_input,
                 emotions_input,
                 format_input,
                 sample_rate_input,
@@ -732,100 +742,19 @@ class BatchInference(AllFunction):
                 task_type_input,
             ]
 
-            def save_all_data_from_inputs():
-                for input_element in outputs_all_data:
-                    input_element.change(
-                        save_all_data,
-                        inputs=[
-                            mode_name_input,
-                            emotions_input,
-                            format_input,
-                            sample_rate_input,
-                            speed_input,
-                            stream_input,
-                            save_temp_input,
-                            prompt_text_input,
-                            prompt_language_input,
-                            text_language,
-                            batch_size_input,
-                            batch_size_random,
-                            batch_size_min,
-                            batch_size_max,
-                            top_k_input,
-                            top_k_random,
-                            top_k_min,
-                            top_k_max,
-                            top_p_input,
-                            top_p_random,
-                            top_p_min,
-                            top_p_max,
-                            temperature_input,
-                            temperature_random,
-                            temperature_min,
-                            temperature_max,
-                            cut_method_input,
-                            max_cut_length_input,
-                            max_cut_length_random,
-                            max_cut_length_min,
-                            max_cut_length_max,
-                            seed_input,
-                            parallel_infer_input,
-                            repetition_penalty_input,
-                            repetition_penalty_random,
-                            repetition_penalty_min,
-                            repetition_penalty_max,
-                            task_type_input,
-                        ],
-                    )
-
-            # 所有输入组件的change事件触发时，调用save_all_data函数
-            # 绑定所有输入组件的change事件
-            save_all_data_from_inputs()
-
-            # 定义一个函数来保存多个组件的内容
-            def save_last_model_il_num_txt(mode_name, illation_num, txt):
-                self.save_last_model(mode_name)
-                self.save_illation_num(illation_num)
-                self.save_test_txt(txt)
-
-            mode_name_input.change(
-                save_last_model_il_num_txt,
-                inputs=[mode_name_input, illation_num_input, txt_input],
-            )
-            illation_num_input.change(
-                save_last_model_il_num_txt,
-                inputs=[mode_name_input, illation_num_input, txt_input],
-            )
-            txt_input.change(
-                save_last_model_il_num_txt,
-                inputs=[mode_name_input, illation_num_input, txt_input],
-            )
-
-            # 定义一个函数来更新多个组件的内容
-            def reload_text():
-                txt = self.get_test_txt()
-                illation_num = self.get_illation_num()
-                mode_name = self.get_last_model(self.all_models)
-                return (
-                    txt,
-                    illation_num,
-                    mode_name,
-                )
-
-            # 在页面加载时调用reload_text函数来更新组件的内容
-            demo.load(
-                reload_text,
-                outputs=[
-                    txt_input,
-                    illation_num_input,
-                    mode_name_input,
-                ],
-            )
-
+            # 加载所有数据
             # 加载页面时，自动加载model配置文件的内容
-            def reload_model_all_data():
-                mode_name = self.get_last_model(self.all_models)
-                all_data = self.get_all_data(mode_name)
+            def reload_model_all_data(model_name=None):
+                if model_name:  # 如果模型名称不为空
+                    self.save_last_model(model_name)  # 保存模型名称
+                else:
+                    model_name = self.get_last_model(
+                        self.all_models
+                    )  # 获取上次使用的模型名称
+                illation_num_input = self.get_illation_num()
+                txt_input = self.get_test_txt()
+                # 读取模型的所有数据
+                all_data = self.get_all_data(model_name)
                 emotions_input = all_data.get("emotions", [])
                 format_input = all_data.get("format", "wav")
                 sample_rate_input = all_data.get("sample_rate", 32000)
@@ -885,6 +814,9 @@ class BatchInference(AllFunction):
                 task_type_input = all_data.get("task_type", "text")
 
                 return (
+                    model_name,
+                    illation_num_input,
+                    txt_input,
                     emotions_input,
                     format_input,
                     sample_rate_input,
@@ -924,17 +856,25 @@ class BatchInference(AllFunction):
                     task_type_input,
                 )
 
-            # 在页面加载时调用reload_model_all_data函数来更新组件的内容
-            demo.load(
+            # 当模型名称改变时，重新加载所有数据，并保存模型名称
+            model_name_input.change(
                 reload_model_all_data,
-                outputs=outputs_all_data,
+                inputs=[model_name_input],  # 模型添加到输入
+                outputs=all_input,
             )
 
-            # 更换模型后，自动重新加载配置文件中储存的数据
-            mode_name_input.change(
+            # 当打开页面时，自动加载上次使用的模型和模型的参数数据
+            demo.load(
                 reload_model_all_data,
-                outputs=outputs_all_data,
+                outputs=all_input,
             )
+
+            # 保存所有数据，当所有数据改变时，保存所有数据，除了模型改变（防止覆盖）
+            for input_element in all_input[1:]:
+                input_element.change(
+                    save_all_data,
+                    inputs=all_input,
+                )
 
         demo.launch(
             server_name=self.local_host,  # 本地服务器地址

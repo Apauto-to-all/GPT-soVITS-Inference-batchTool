@@ -23,6 +23,8 @@ class AllFunction:
     def get_filename(self, txt: str) -> str:
         # 获取当前时间戳
         timestamp = str(int(time.time()))
+        # 如果txt是多行文本，合并为一行
+        txt = txt.replace("\n", "。")
         # 多余的字符用省略号代替
         if len(txt) > 30:
             # 文件名中加入时间戳，确保每次都不同

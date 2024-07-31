@@ -6,6 +6,10 @@ import time
 import json
 import requests
 
+# 用于写入读取元数据
+from mutagen.wave import WAVE
+from mutagen.id3 import TXXX
+
 
 # 这个是一个功能类，储存所有需要使用的功能函数
 class AllFunction:
@@ -76,7 +80,7 @@ class AllFunction:
                 f"{self.config_folder}/illation_num.txt", "r", encoding="utf-8"
             ) as f:
                 illation_num = f.read()
-            return int(illation_num)
+            return int(illation_num) if illation_num.isdigit() else 5
         return 5
 
     # 保存推理次数结果
@@ -215,11 +219,15 @@ class AllFunction:
     # 发送post请求
     def post_txt(self, txt, mode_name, random_dict):
         # 获取文件名，用于保存wav文件
-        filename = (
+        outputFilePath = (
             f"temp/{self.get_filename(txt)}.wav"  # 使用get_filename函数生成文件名
         )
         # txt转url编码
         txt = requests.utils.quote(txt)
+        # 获取输入的种子
+        seed = random_dict["seed"]
+        # 如果种子是-1，空字符串或者None，生成一个随机种子
+        actual_seed = seed if seed not in [-1, "", None] else random.randrange(1 << 32)
         data = {
             "character": mode_name,
             "emotion": random_dict["emotion"],  # 情感
@@ -251,7 +259,7 @@ class AllFunction:
             "parallel_infer": random_dict[
                 "parallel_infer"
             ],  # 是否并行推理，为true时，会加速很多，默认为true。
-            "seed": random_dict["seed"],  # 随机种子，默认为-1。
+            "seed": actual_seed,  # 随机种子
             "save_temp": random_dict[
                 "save_temp"
             ],  # 是否保存临时文件，为true时，后端会保存生成的音频，下次相同请求会直接返回该数据，默认为false。
@@ -265,9 +273,10 @@ class AllFunction:
             print(response.json())
             return
         # 保持wav文件
-        with open(filename, "wb") as f:
+        with open(outputFilePath, "wb") as f:
             f.write(response.content)
-        return filename  # 返回文件路径
+        self.add_metadata_to_wav(outputFilePath, data)  # 写入元数据
+        return outputFilePath  # 返回文件路径
 
     # 自动清理临时文件
     def auto_clean_temp(self):
@@ -292,3 +301,35 @@ class AllFunction:
     def check_folder(self, folder_path):
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
+
+    # 写入元数据，wav文件，写入元数据
+    def add_metadata_to_wav(self, wav_path, metadata_dict):
+        # 读取wav文件
+        audio = WAVE(wav_path)
+        # 初始化标签，如果没有标签
+        if audio.tags is None:
+            audio.add_tags()
+        # 将url编码的文本解码
+        metadata_dict["text"] = requests.utils.unquote(metadata_dict["text"])
+        # 将字典转换为JSON字符串
+        metadata_json = json.dumps(metadata_dict)
+        # 使用 TXXX 帧来存储自定义元数据
+        audio.tags.add(TXXX(encoding=3, desc="tts_parameters", text=metadata_json))
+        audio.save()  # 保存元数据
+
+    # 从wav文件中读取元数据
+    def read_metadata_from_wav(self, wav_path):
+        # 读取元数据
+        audio = WAVE(wav_path)
+        # 如果没有标签，返回空字典
+        tts_parameters = next(
+            (
+                tag.text[0]  # 返回TXXX标
+                for tag in audio.tags.values()  # 遍历所有标签
+                if isinstance(tag, TXXX)
+                and tag.desc
+                == "tts_parameters"  # 如果是TXXX标签，并且描述为tts_parameters
+            ),
+            None,  # 如果没有找到，返回None
+        )
+        return json.loads(tts_parameters) if tts_parameters else {}  # 返回元数据

@@ -109,7 +109,8 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ## 后续计划
 
 - [x] 支持自动删除`temp`文件夹下的文件
-- [ ] 一同保存推理参数
+- [x] 推理参数写入wav文件的元数据，支持读取
 - [ ] 统一储存筛选出的音频文件
+- [ ] 实现查看音频元数据的页面
 
 ……

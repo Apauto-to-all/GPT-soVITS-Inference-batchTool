@@ -40,8 +40,11 @@ git clone https://github.com/Apauto-to-all/GPT-soVITS-Inference-batchTool.git
 
 ```shell
 pip install -r requirements.txt
+```
 
-# 使用国内源
+使用国内源：
+
+```shell
 pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 

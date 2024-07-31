@@ -593,7 +593,52 @@ class BatchInference(AllFunction):
                     outputs=output_audios,
                 )
 
-            def save_all_data(  # 定义一个函数来保存所有的数据
+            # 定义一个列表，包含所有组件，除了模型，文本，连抽次数
+            all_input = [
+                model_name_input,
+                illation_num_input,
+                txt_input,
+                emotions_input,
+                format_input,
+                sample_rate_input,
+                speed_input,
+                stream_input,
+                save_temp_input,
+                prompt_text_input,
+                prompt_language_input,
+                text_language,
+                batch_size_input,
+                batch_size_random,
+                batch_size_min,
+                batch_size_max,
+                top_k_input,
+                top_k_random,
+                top_k_min,
+                top_k_max,
+                top_p_input,
+                top_p_random,
+                top_p_min,
+                top_p_max,
+                temperature_input,
+                temperature_random,
+                temperature_min,
+                temperature_max,
+                cut_method_input,
+                max_cut_length_input,
+                max_cut_length_random,
+                max_cut_length_min,
+                max_cut_length_max,
+                seed_input,
+                parallel_infer_input,
+                repetition_penalty_input,
+                repetition_penalty_random,
+                repetition_penalty_min,
+                repetition_penalty_max,
+                task_type_input,
+            ]
+
+            # 保存所有数据，除了最后使用的模型，如果模型改变，才保存最后的模型
+            def save_all_data(
                 model_name,
                 illation_num,
                 txt,
@@ -691,54 +736,9 @@ class BatchInference(AllFunction):
                     "repetition_penalty": repetition_penalty_list,  # 随机参数repetition_penalty
                     "task_type": task_type,
                 }
-                self.save_last_model(model_name)
                 self.save_illation_num(illation_num)
                 self.save_test_txt(txt)
                 self.save_all_data(all_data)
-
-            # 定义一个列表，包含所有组件，除了模型，文本，连抽次数
-            all_input = [
-                model_name_input,
-                illation_num_input,
-                txt_input,
-                emotions_input,
-                format_input,
-                sample_rate_input,
-                speed_input,
-                stream_input,
-                save_temp_input,
-                prompt_text_input,
-                prompt_language_input,
-                text_language,
-                batch_size_input,
-                batch_size_random,
-                batch_size_min,
-                batch_size_max,
-                top_k_input,
-                top_k_random,
-                top_k_min,
-                top_k_max,
-                top_p_input,
-                top_p_random,
-                top_p_min,
-                top_p_max,
-                temperature_input,
-                temperature_random,
-                temperature_min,
-                temperature_max,
-                cut_method_input,
-                max_cut_length_input,
-                max_cut_length_random,
-                max_cut_length_min,
-                max_cut_length_max,
-                seed_input,
-                parallel_infer_input,
-                repetition_penalty_input,
-                repetition_penalty_random,
-                repetition_penalty_min,
-                repetition_penalty_max,
-                task_type_input,
-            ]
 
             # 加载所有数据
             # 加载页面时，自动加载model配置文件的内容

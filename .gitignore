@@ -165,3 +165,6 @@ cython_debug/
 config
 txt_to_wav.py
 temp
+*_env
+*.bat
+如何更新项目.txt

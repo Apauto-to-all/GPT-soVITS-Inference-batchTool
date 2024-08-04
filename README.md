@@ -2,9 +2,11 @@
 
 - [GPT-soVITS-Inference批量抽卡工具](#gpt-sovits-inference批量抽卡工具)
   - [使用方法](#使用方法)
-    - [克隆项目](#克隆项目)
-    - [安装依赖](#安装依赖)
-    - [运行](#运行)
+    - [使用整合包](#使用整合包)
+    - [手动搭建环境](#手动搭建环境)
+      - [克隆项目](#克隆项目)
+      - [安装依赖](#安装依赖)
+      - [运行](#运行)
   - [简单介绍用法](#简单介绍用法)
     - [一个是设置页面](#一个是设置页面)
     - [另一个是抽卡页面](#另一个是抽卡页面)
@@ -28,13 +30,25 @@
 
 ## 使用方法
 
-### 克隆项目
+### 使用整合包
+
+本项目的环境搭建过程很简单，但考虑到一些小白用户，我做了一个整合包，将其上传到一些网盘
+
+[蓝奏云网盘](https://wwo.lanzoub.com/b00mon47vi) 密码:cfre
+
+[123网盘](https://www.123pan.com/s/y2I2jv-yLmU3.html)
+
+下载整合包后，解压，运行`开始使用.bat`即可
+
+### 手动搭建环境
+
+#### 克隆项目
 
 ```shell
 git clone https://github.com/Apauto-to-all/GPT-soVITS-Inference-batchTool.git
 ```
 
-### 安装依赖
+#### 安装依赖
 
 本项目主要使用了 `gradio==4.39.0` 包和 `requests` 包，可以通过以下命令安装
 
@@ -48,7 +62,7 @@ pip install -r requirements.txt
 pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
-### 运行
+#### 运行
 
 首先需要**启动GPT-soVITS-Inference的后端服务**，然后运行`main.py`，否则程序无法正常运行
 

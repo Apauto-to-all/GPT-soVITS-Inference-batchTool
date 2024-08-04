@@ -104,7 +104,7 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 - 本项目默认部署在本地，使用`7861`端口，有需要也可以在[`AllFunction.py`](AllFunction.py)文件找到相应的变量进行修改
 
-- 所有音频文件都会保存在`temp`文件夹下，目前没有设置自动删除，有需要可以手动删除里面的文件
+- 所有音频文件都会保存在`temp`文件夹下，文件默认保存7天，可以在[`AllFunction.py`](AllFunction.py)文件中修改`self.temp_file_save_time`变量的值，也可以选择关闭自动删除功能
 
 ## 后续计划
 

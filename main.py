@@ -1,7 +1,11 @@
 import asyncio
 import gradio as gr
 import requests
+import sys
+import os
 
+# 将当前目录添加到 sys.path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # 导入功能父类
 from AllFunction import AllFunction
 

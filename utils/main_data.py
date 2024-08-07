@@ -14,6 +14,10 @@ import requests
 
 # 继承所有设置数据
 from link_utils import LinkUtils
+from metadata_wav import MetadataWav
+
+# 在wav文件中添加元数据
+metadata_wav = MetadataWav()
 
 
 class MainData(LinkUtils):
@@ -266,7 +270,7 @@ class MainData(LinkUtils):
         # 保持wav文件
         with open(outputFilePath, "wb") as f:
             f.write(response.content)
-        self.add_metadata_to_wav(outputFilePath, data)  # 写入元数据
+        metadata_wav.add_metadata_to_wav(outputFilePath, data)  # 写入元数据
         return outputFilePath  # 返回文件路径
 
     # 自动清理临时文件

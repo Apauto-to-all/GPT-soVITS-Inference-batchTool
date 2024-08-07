@@ -33,7 +33,11 @@ class MainSetting:
 
         # 读取情感列表
         self.all_models_emotions = self.get_model_emotions()
-        self.all_models = list(self.all_models_emotions.keys())
+        self.all_models = (
+            list(self.all_models_emotions.keys())
+            if self.all_models_emotions != -1
+            else []
+        )
 
     # 获取感情列表
     def get_model_emotions(self) -> dict:
@@ -45,7 +49,7 @@ class MainSetting:
             else:
                 return {}  # 或者抛出异常，或者返回错误信息
         except Exception as e:
-            return {}
+            return -1
 
     def set_all_folder(self):
         self.config_all_model_last_data_folder = (
@@ -104,6 +108,18 @@ class MainSetting:
         self.auto_open_browser = json_data.get(
             "auto_open_browser", True
         )  # 是否自动打开浏览器，True or False
+
+    # 更新某一条数据
+    def update_data(self, dict_data: dict):
+        """
+        更新多条数据
+        : param dict_data: dict, 需要更新的数据，格式为{"key1": "value1", "key2": "value2", ...}
+        """
+        # 更新数据
+        json_data = self.read_main_data()
+        for key in dict_data:
+            json_data[key] = dict_data[key]
+        rs.save_json(self.main_data_path, json_data)
 
     # 文件缺失，恢复到初始设置
     def recover_to_default(self):

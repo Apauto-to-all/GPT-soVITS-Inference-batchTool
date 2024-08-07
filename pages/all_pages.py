@@ -9,16 +9,17 @@ from setting_page import SettingPage
 import gradio as gr
 
 
-class AllPages(MainPage):
+class AllPages(MainPage, SettingPage):
     def __init__(self):
         super().__init__()
 
     def showAllPages(self):
-        with gr.Blocks() as demo:
+        with gr.Blocks(title="抽卡工具") as demo:
             gr.Markdown("# GPT-soVITS-Inference抽卡工具")
-            # 2个tab页面
+            # 2个tab页面，主页面
             self.showMainPage(demo)
             # 1个设置tab页面
+            self.showSettingPage(demo)
             return demo
 
     def appRun(self):

@@ -1,5 +1,4 @@
 # 主要功能页面
-
 import gradio as gr
 from link_pages import LinkPages
 
@@ -22,6 +21,22 @@ class MainPage(LinkPages):
         )
 
     def showMainPage(self, demo: gr.Blocks):
+        if self.main_data_utils.main_setting.all_models_emotions == -1:
+            with gr.Tab(label="检测到后端服务未启动"):
+                gr.Markdown("# 检测到GPT-soVITS-Inference后端服务未启动")
+                gr.Markdown(
+                    "## 本程序依赖于GPT-soVITS-Inference的API接口，启动后端后，再重启本程序"
+                )
+                gr.Markdown(
+                    "## 本程序默认的角色列表URL地址为：http://127.0.0.1:5000/character_list"
+                )
+                gr.Markdown(
+                    "## 本程序默认的文本转语音URL地址为：http://127.0.0.1:5000/tts"
+                )
+                gr.Markdown(
+                    f"## 如果你切换了后端服务的地址，或者端口，需要在 {self.main_data_utils.main_setting.main_data_path} 中修改"
+                )
+            return
         with gr.Tab(label="设置随机参数"):
             # 添加一个提示文本
             gr.Markdown(

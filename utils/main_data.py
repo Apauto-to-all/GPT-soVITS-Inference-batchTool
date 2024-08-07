@@ -1,3 +1,9 @@
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# 获取和储存主要页面使用的数据
+import asyncio
 import datetime
 import os
 import random
@@ -6,42 +12,29 @@ import time
 import json
 import requests
 
-# 用于写入读取元数据
-from mutagen.wave import WAVE
-from mutagen.id3 import TXXX
+# 继承所有设置数据
+from link_utils import LinkUtils
 
 
-# 这个是一个功能类，储存所有需要使用的功能函数
-class AllFunction:
-    # 配置文件路径
+class MainData(LinkUtils):
     def __init__(self):
-        # 目标API的host和端口号
-        self.host = "127.0.0.1"  # 目标API的host
-        self.port = 5000  # 目标API的端口号
-        self.url_character_list = (
-            f"http://{self.host}:{self.port}/character_list"  # 获取所有模型的API
-        )
-        self.url_txt_to_wav = f"http://{self.host}:{self.port}/tts"  # 文本转语音的API
+        super().__init__()
+        self.main_setting  # 获取所有主页面设置的数据
 
-        # 本程序的host和端口号
-        self.local_host = "127.0.0.1"  # 本程序的ip地址，默认为127.0.0.1
-        self.local_port = 7861  # 本程序的端口号，默认为7860
-
-        # 创建配置文件夹
-        self.config_folder = "config"  # 配置文件夹
-        self.check_folder(self.config_folder)  # 检查配置文件夹是否存在，不存在则创建
-
-        # 临时文件夹
-        self.temp_folder = "temp"  # 临时文件夹，用于保存wav文件
-        self.check_folder(self.temp_folder)  # 临时文件夹，用于保存wav文件，不存在则创建
-        self.temp_file_save_time = 7  # 临时文件保存时间，单位为天数（默认为7天），如果设置为0，立即清理所有临时文件
-        self.is_auto_clean_temp = True  # 是否自动清理临时文件，True or False
-
-        self.auto_clean_temp()  # 自动清理临时文件
-
-        # 其他设置
-        self.max_prefix_length = 30  # 保存文件名时，最大前缀字符长度
-        self.auto_open_browser = True  # 是否自动打开浏览器，True or False
+    # 推理获取结果
+    async def interface(self, model_name, txt, illation_num=5):
+        all_data = self.get_all_data(model_name)
+        # 生成推理结果
+        random_results = self.random_generate(
+            all_data, illation_num
+        )  # 生成多个推理结果
+        for selected_result in random_results:
+            # 对每个推理结果发送请求并保存音频文件，收集所有文件的路径
+            wav_file_path = self.post_txt(
+                txt, model_name, selected_result
+            )  # 发送请求，返回音频文件路径
+            await asyncio.sleep(0.1)  # 等待0.1秒
+            yield wav_file_path  # 返回音频文件路径
 
     # 获取文件名储存格式
     def get_filename(self, txt: str) -> str:
@@ -51,18 +44,16 @@ class AllFunction:
         txt = txt.replace("\n", "_")
         txt = re.sub(r'[\\/:*?"<>|]', "_", txt)
         # 多余的字符用省略号代替
-        if len(txt) > self.max_prefix_length:
+        if len(txt) > self.main_setting.max_prefix_length:
             # 文件名中加入时间戳，确保每次都不同
-            return txt[: self.max_prefix_length] + "..." + "+" + timestamp
+            return txt[: self.main_setting.max_prefix_length] + "..." + "+" + timestamp
         else:
             return txt + "+" + timestamp
 
     # 获取配置储存最后的模型
     def get_last_model(self, all_models):
-        if os.path.exists(f"{self.config_folder}/last_model.txt"):
-            with open(
-                f"{self.config_folder}/last_model.txt", "r", encoding="utf-8"
-            ) as f:
+        if os.path.exists(self.main_setting.last_model_path):
+            with open(self.main_setting.last_model_path, "r", encoding="utf-8") as f:
                 last_model = f.read()
             if last_model in all_models:
                 return last_model
@@ -70,35 +61,33 @@ class AllFunction:
 
     # 保存最后的模型
     def save_last_model(self, model_name):
-        with open(f"{self.config_folder}/last_model.txt", "w", encoding="utf-8") as f:
+        with open(self.main_setting.last_model_path, "w", encoding="utf-8") as f:
             f.write(model_name)
 
     # 获取推理次数结果
     def get_illation_num(self):
-        if os.path.exists(f"{self.config_folder}/illation_num.txt"):
-            with open(
-                f"{self.config_folder}/illation_num.txt", "r", encoding="utf-8"
-            ) as f:
+        if os.path.exists(self.main_setting.last_illation_num):
+            with open(self.main_setting.last_illation_num, "r", encoding="utf-8") as f:
                 illation_num = f.read()
             return int(illation_num) if illation_num.isdigit() else 5
         return 5
 
     # 保存推理次数结果
     def save_illation_num(self, illation_num):
-        with open(f"{self.config_folder}/illation_num.txt", "w", encoding="utf-8") as f:
+        with open(self.main_setting.last_illation_num, "w", encoding="utf-8") as f:
             f.write(str(illation_num))
 
     # 获取测试文本
     def get_test_txt(self):
-        if os.path.exists(f"{self.config_folder}/test_txt.txt"):
-            with open(f"{self.config_folder}/test_txt.txt", "r", encoding="utf-8") as f:
+        if os.path.exists(self.main_setting.last_test_txt):
+            with open(self.main_setting.last_test_txt, "r", encoding="utf-8") as f:
                 test_txt = f.read()
             return test_txt
         return "你好啊，我是你的智能语音助手"
 
     # 保存测试文本
     def save_test_txt(self, test_txt):
-        with open(f"{self.config_folder}/test_txt.txt", "w", encoding="utf-8") as f:
+        with open(self.main_setting.last_test_txt, "w", encoding="utf-8") as f:
             f.write(test_txt)
 
     # 保存一个模型的所有数据
@@ -106,19 +95,21 @@ class AllFunction:
         if not all_data or not all_data.get("model_name"):
             return
         model_name = all_data.get("model_name")
-        with open(
-            f"{self.config_folder}/{model_name}.json", "w", encoding="utf-8"
-        ) as f:
+        model_path = os.path.join(
+            self.main_setting.config_all_model_last_data_folder, f"{model_name}.json"
+        )
+        with open(model_path, "w", encoding="utf-8") as f:
             json.dump(all_data, f, ensure_ascii=False, indent=4)
 
     # 获取一个模型的所有数据
     def get_all_data(self, model_name):
         if not model_name:
             return {}
-        if os.path.exists(f"{self.config_folder}/{model_name}.json"):
-            with open(
-                f"{self.config_folder}/{model_name}.json", "r", encoding="utf-8"
-            ) as f:
+        model_path = os.path.join(
+            self.main_setting.config_all_model_last_data_folder, f"{model_name}.json"
+        )
+        if os.path.exists(model_path):
+            with open(model_path, "r", encoding="utf-8") as f:
                 all_data = json.load(f)
             return all_data
         return {}
@@ -167,7 +158,7 @@ class AllFunction:
             else:
                 return "auto_cut"
 
-        # 模拟的推理过程，实际应用中应替换为调用推理API
+        # 生成随机推理结果
         results = []
         for _ in range(illation_num):  # 生成多个推理结果
             # 确保多次推理结果，每个情感都有机会被选中
@@ -219,8 +210,8 @@ class AllFunction:
     # 发送post请求
     def post_txt(self, txt, mode_name, random_dict):
         # 获取文件名，用于保存wav文件
-        outputFilePath = (
-            f"temp/{self.get_filename(txt)}.wav"  # 使用get_filename函数生成文件名
+        outputFilePath = os.path.join(
+            self.main_setting.temp_folder, f"{self.get_filename(txt)}.wav"
         )
         # txt转url编码
         txt = requests.utils.quote(txt)
@@ -267,7 +258,7 @@ class AllFunction:
                 "stream"
             ],  # 是否流式传输，为true时，会按句返回音频，默认为false。
         }
-        response = requests.post(self.url_txt_to_wav, json=data)
+        response = requests.post(self.main_setting.api_url_txt_to_wav, json=data)
         # 如果是错误信息，返回错误信息
         if response.status_code != 200:
             print(response.json())
@@ -280,7 +271,7 @@ class AllFunction:
 
     # 自动清理临时文件
     def auto_clean_temp(self):
-        if not self.is_auto_clean_temp:
+        if not self.main_setting.is_auto_clean_temp:
             return
         # 获取当前时间
         now = datetime.datetime.now()
@@ -289,47 +280,10 @@ class AllFunction:
         # 计算过期时间
         expire_time = now - datetime.timedelta(days=self.temp_file_save_time)
         # 遍历临时文件夹
-        for file_name in os.listdir(self.temp_folder):
+        for file_name in os.listdir(self.main_setting.temp_folder):
             # 获取文件的创建时间
-            file_path = os.path.join(self.temp_folder, file_name)
+            file_path = os.path.join(self.main_setting.temp_folder, file_name)
             create_time = datetime.datetime.fromtimestamp(os.path.getctime(file_path))
             # 如果文件创建时间早于过期时间，删除文件
             if create_time <= expire_time:
                 os.remove(file_path)
-
-    # 检查文件夹是否存在，不存在则创建
-    def check_folder(self, folder_path):
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
-
-    # 写入元数据，wav文件，写入元数据
-    def add_metadata_to_wav(self, wav_path, metadata_dict):
-        # 读取wav文件
-        audio = WAVE(wav_path)
-        # 初始化标签，如果没有标签
-        if audio.tags is None:
-            audio.add_tags()
-        # 将url编码的文本解码
-        metadata_dict["text"] = requests.utils.unquote(metadata_dict["text"])
-        # 将字典转换为JSON字符串
-        metadata_json = json.dumps(metadata_dict)
-        # 使用 TXXX 帧来存储自定义元数据
-        audio.tags.add(TXXX(encoding=3, desc="tts_parameters", text=metadata_json))
-        audio.save()  # 保存元数据
-
-    # 从wav文件中读取元数据
-    def read_metadata_from_wav(self, wav_path):
-        # 读取元数据
-        audio = WAVE(wav_path)
-        # 如果没有标签，返回空字典
-        tts_parameters = next(
-            (
-                tag.text[0]  # 返回TXXX标
-                for tag in audio.tags.values()  # 遍历所有标签
-                if isinstance(tag, TXXX)
-                and tag.desc
-                == "tts_parameters"  # 如果是TXXX标签，并且描述为tts_parameters
-            ),
-            None,  # 如果没有找到，返回None
-        )
-        return json.loads(tts_parameters) if tts_parameters else {}  # 返回元数据

@@ -25,7 +25,7 @@ class MetadataWav(LinkUtils):
         # 将url编码的文本解码
         metadata_dict["text"] = requests.utils.unquote(metadata_dict["text"])
         # 将字典转换为JSON字符串
-        metadata_json = json.dumps(metadata_dict)
+        metadata_json = json.dumps(metadata_dict, ensure_ascii=False)
         # 使用 TXXX 帧来存储自定义元数据
         audio.tags.add(TXXX(encoding=3, desc="tts_parameters", text=metadata_json))
         audio.save()  # 保存元数据

@@ -20,7 +20,7 @@ class SettingPage(LinkPages):
 
             # 保存设置
             def warning():
-                gr.Info("保存成功，请重启程序以使更改生效！")
+                gr.Info("保存成功，下次重启程序生效！")
 
             self.save_setting.click(warning)
 
@@ -28,7 +28,9 @@ class SettingPage(LinkPages):
         with gr.Tab(label="主设置"):
             # 显示设置
             if not os.path.exists(self.main_data_utils.main_setting.main_data_path):
-                gr.Markdown("### 未找到设置文件，请重启程序。（重启程序会自动创建的）")
+                gr.Markdown(
+                    "### 未找到设置文件，请重启程序。（重启程序会自动创建设置文件）"
+                )
                 return
             with open(
                 self.main_data_utils.main_setting.main_data_path, "r", encoding="utf-8"

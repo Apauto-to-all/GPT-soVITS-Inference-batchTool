@@ -42,8 +42,6 @@ class ReadAndSave:
                 json.dump(data, f, ensure_ascii=False, indent=4)
         except Exception as e:
             print(e)
-            return False
-        return True
 
     # 读取txt文件
     def read_txt(self, file_path) -> str:

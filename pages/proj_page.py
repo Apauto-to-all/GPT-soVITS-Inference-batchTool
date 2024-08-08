@@ -1,0 +1,161 @@
+# 项目管理工具，用于展示项目的文件
+import json
+import os
+import sys
+import gradio as gr
+from tkinter import Tk, filedialog
+
+# 将项目根目录添加到sys.path中
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from link_pages import LinkPages
+
+
+class ProjPage(LinkPages):
+    def __init__(self):
+        super().__init__()
+
+    # 在顶部选择项目
+    def showSelectProj(self, demo: gr.Blocks):
+        with gr.Row():
+            self.use_project_collection = gr.Dropdown(
+                label="项目集合",
+                choices=self.proj_mgmt_utils.proj_setting.get_project_data().keys(),
+                value=self.proj_mgmt_utils.proj_setting.get_last_project_collection(),
+                interactive=True,
+            )
+            self.use_sub_project = gr.Dropdown(
+                label="子项目",
+                choices=self.proj_mgmt_utils.proj_setting.get_sub_project_data(
+                    self.proj_mgmt_utils.proj_setting.get_last_project_collection()
+                ),
+                value=self.proj_mgmt_utils.proj_setting.get_last_sub_project(),
+                interactive=True,
+            )
+
+        def update_sub_project(collection):
+            sub_project_up = gr.update(
+                choices=self.proj_mgmt_utils.proj_setting.get_sub_project_data(
+                    collection
+                ),
+                value=self.proj_mgmt_utils.proj_setting.get_last_sub_project(
+                    collection
+                ),
+            )
+            return sub_project_up
+
+        self.use_project_collection.change(
+            update_sub_project,
+            inputs=[self.use_project_collection],
+            outputs=[self.use_sub_project],
+        )
+        for change_project in [self.use_project_collection, self.use_sub_project]:
+            change_project.change(
+                self.proj_mgmt_utils.proj_setting.save_last_project,
+                inputs=[self.use_project_collection, self.use_sub_project],
+            )
+
+    # 定义一个函数来处理文件夹选择
+    def selectFolder(self):
+        root = Tk()
+        root.attributes("-topmost", True)
+        root.withdraw()
+        folder_path = filedialog.askdirectory()
+        root.destroy()
+        if folder_path:
+            return str(folder_path)
+        else:
+            return None
+
+    # 使用gradio展示项目管理工具
+    def showProjMgmt(self, demo: gr.Blocks):
+        # 创建一个文件夹选择器
+        with gr.Tab(label="项目管理"):
+            # 创建一个新的项目集合
+            gr.Markdown("### 创建一个新的项目集合")
+            with gr.Row():
+                project_collection_input_new_name = gr.Textbox(
+                    label="项目集合名称",
+                    placeholder="输入一个新的不重复的项目集合名称",
+                    interactive=True,
+                )
+                project_collection_input_path = gr.Textbox(
+                    label="项目集合路径",
+                    placeholder="点击按钮获取文件夹",
+                    interactive=False,
+                )
+                browse_btn = gr.Button("选择文件夹", variant="primary", size="sm")
+                browse_btn.click(
+                    self.selectFolder,
+                    outputs=project_collection_input_path,
+                    show_progress="hidden",
+                )
+                create_btn = gr.Button("创建项目集合", variant="primary", size="sm")
+
+            # 创建一个新的子项目
+            gr.Markdown("### 创建一个新的子项目")
+            with gr.Row():
+                project_collection_input_name = gr.Dropdown(
+                    label="项目集合名称",
+                    choices=self.proj_mgmt_utils.proj_setting.get_all_project_collection(),
+                    value=self.proj_mgmt_utils.proj_setting.get_last_project_collection(),
+                    interactive=(
+                        True
+                        if self.proj_mgmt_utils.proj_setting.get_last_project_collection()
+                        else False
+                    ),
+                )
+                sub_project_input_new_name = gr.Textbox(
+                    label="子项目名称",
+                    placeholder="输入一个新的不重复的子项目名称",
+                    interactive=True,
+                )
+                create_sub_btn = gr.Button("创建子项目", variant="primary", size="sm")
+
+            # 创建项目集合，然后更新项目集合内容
+            def create_project_collection_up_project_collection(input_name, input_path):
+                if not input_name or not input_path:
+                    gr.Error("项目集合名称和路径不能为空")
+                    return (gr.update(), gr.update())
+                message = self.proj_mgmt_utils.create_project_collection(
+                    input_name, input_path
+                )
+                if message.get("error"):
+                    gr.Error(message["error"])
+                else:
+                    gr.Info(json.dumps(message, ensure_ascii=False))
+                new_project_collection = gr.update(
+                    choices=self.proj_mgmt_utils.proj_setting.get_all_project_collection(),
+                )
+                return (new_project_collection, new_project_collection)
+
+            # 绑定创建项目集合的按钮
+            create_btn.click(
+                create_project_collection_up_project_collection,
+                inputs=[
+                    project_collection_input_new_name,
+                    project_collection_input_path,
+                ],
+                outputs=[self.use_project_collection, project_collection_input_name],
+            )
+
+            # 创建子项目，然后更新子项目内容
+            def create_sub_project_up_sub_project(input_name, input_path):
+                if not input_name or not input_path:
+                    gr.Error("项目集合名称和路径不能为空")
+                    return
+                message = self.proj_mgmt_utils.create_sub_project(
+                    input_name, input_path
+                )
+                if message.get("error"):
+                    gr.Error(message["error"])
+                else:
+                    gr.Info(json.dumps(message, ensure_ascii=False))
+
+            create_sub_btn.click(
+                create_sub_project_up_sub_project,
+                inputs=[
+                    project_collection_input_name,
+                    sub_project_input_new_name,
+                ],
+            )

@@ -1,44 +1,78 @@
-# 项目管理工具，用于展示项目的文件
-import os
 import sys
-import gradio as gr
-from tkinter import Tk, filedialog
+import os
 
-# 将项目根目录添加到sys.path中
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# 获取和储存主要页面使用的数据
 
-import config as config
-
-
-# 定义一个函数来处理文件夹选择
-def select_folder():
-    root = Tk()
-    root.attributes("-topmost", True)
-    root.withdraw()
-    folder_path = filedialog.askdirectory()
-    root.destroy()
-    if folder_path:
-        return str(folder_path)
-    else:
-        return "无文件夹"
+# 继承所有设置数据
+from link_utils import LinkUtils
 
 
-# 使用gradio展示项目管理工具
-def show_proj_mgmt():
-    # 创建一个文件夹选择器
-    with gr.Blocks() as demo:
-        with gr.Row():
-            input_path = gr.Textbox(
-                label="项目储存目录", interactive=False, autoscroll=False
+class ProjectManagement(LinkUtils):
+    def __init__(self):
+        super().__init__()
+        self.proj_setting
+
+    # 创建项目集合
+    def create_project_collection(self, project_collection_name, project_path):
+        try:
+            data = self.proj_setting.get_project_data()
+            if project_collection_name in data:
+                return {"error": "项目集合已存在"}
+            if not os.path.exists(project_path):
+                return {"error": "文件夹不存在"}
+            # 项目合集下的所有文件夹都作为子项目
+            data[project_collection_name] = [project_path, os.listdir(project_path)]
+            self.proj_setting.save_project_data(data)
+            return {"success": "创建成功"}
+        except Exception as e:
+            return {"error": str(e)}
+
+    # 创建子项目
+    def create_sub_project(self, project_collection_name, sub_project_name):
+        try:
+            data = self.proj_setting.get_project_data()
+            sub_project_path = os.path.join(
+                data[project_collection_name][0], sub_project_name
             )
-            browse_btn = gr.Button("选择文件夹", variant="primary", size="sm")
-            browse_btn.click(
-                select_folder, inputs=None, outputs=input_path, show_progress="hidden"
-            )
+            if sub_project_name in data[project_collection_name][1]:
+                return {"error": f"{sub_project_name} 子项目已存在"}
 
-    # 启动接口
-    demo.launch(inbrowser=True)
+            # 如果文件夹不存在，就创建文件夹
+            if not os.path.exists(sub_project_path):
+                os.makedirs(sub_project_path)
+            # 添加到子项目中
+            data[project_collection_name][1].append(sub_project_name)
+            # 保存数据
+            self.proj_setting.save_project_data(data)
+            return {"success": "创建成功"}
+        except Exception as e:
+            return {"error": str(e)}
 
+    # 删除项目集合
+    def delete_project_collection(self, project_collection_name):
+        try:
+            data = self.proj_setting.get_project_data()
+            if project_collection_name not in data:
+                return {"error": "项目集合不存在"}
+            del data[project_collection_name]
+            self.proj_setting.save_project_data(data)
+            return {
+                "success": "删除成功，本程序不会删除本地文件夹，如有需要，请手动删除"
+            }
+        except Exception as e:
+            return {"error": str(e)}
 
-# 调用函数展示项目管理工具
-show_proj_mgmt()
+    # 删除子项目
+    def delete_sub_project(self, project_collection_name, sub_project_name):
+        try:
+            data = self.proj_setting.get_project_data()
+            if sub_project_name not in data[project_collection_name][1]:
+                return {"error": "子项目不存在"}
+            data[project_collection_name][1].remove(sub_project_name)
+            self.proj_setting.save_project_data(data)
+            return {
+                "success": "删除成功，本程序不会删除本地文件夹，如有需要，请手动删除"
+            }
+        except Exception as e:
+            return {"error": str(e)}

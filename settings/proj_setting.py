@@ -1,5 +1,4 @@
 # 项目管理页面，储存一些项目的配置信息
-import json
 import os
 import sys
 

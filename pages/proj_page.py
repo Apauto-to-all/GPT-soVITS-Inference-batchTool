@@ -177,7 +177,8 @@ class ProjPage(LinkPages):
             def create_project_collection_up_project_collection(input_name, input_path):
                 if not input_name or not input_path:
                     gr.Warning("项目集合名称和路径不能为空")
-                    return (gr.update(), gr.update(), gr.update(), gr.update())
+                    result = tuple(gr.update() for _ in all_project_collection)
+                    return result
                 message = self.proj_mgmt_utils.create_project_collection(
                     input_name, input_path
                 )
@@ -248,6 +249,76 @@ class ProjPage(LinkPages):
                     sub_project_input_new_name,
                     self.use_project_collection,
                     delete_sub_project_project_collection,
+                ],
+                outputs=[self.use_sub_project, delete_sub_project],
+            )
+
+            # 删除项目集合，然后更新项目集合内容
+            def delete_project_collection_up_project_collection(collection):
+                if not collection:
+                    result = tuple(gr.update() for _ in all_project_collection)
+                    return result
+                message = self.proj_mgmt_utils.delete_project_collection(collection)
+                if message.get("error"):
+                    gr.Warning(message["error"])
+                else:
+                    gr.Info(json.dumps(message, ensure_ascii=False))
+                new_project_collection = gr.update(
+                    choices=self.proj_mgmt_utils.proj_setting.get_all_project_collection(),
+                )
+                result = tuple(new_project_collection for _ in all_project_collection)
+                return result
+
+            delete_btn.click(
+                delete_project_collection_up_project_collection,
+                inputs=[delete_project_collection],
+                outputs=all_project_collection,
+            )
+
+            # 删除子项目，然后更新子项目内容
+            def delete_sub_project_up_sub_project(
+                delete_sub_project_project_collection,
+                delete_sub_project,
+                use_project_collection,
+                use_sub_project,
+            ):
+                if not delete_sub_project_project_collection or not delete_sub_project:
+                    gr.Warning("项目集合名称和子项目名称不能为空")
+                    return (gr.update(), gr.update())
+                if (
+                    use_project_collection == delete_sub_project_project_collection
+                    and use_sub_project == delete_sub_project
+                ):
+                    gr.Warning(
+                        f"{use_project_collection} -- {use_sub_project} ：正在使用中，无法删除，请先更换子项目 “ {use_sub_project} ” "
+                    )
+                    return (gr.update(), gr.update())
+                message = self.proj_mgmt_utils.delete_sub_project(
+                    delete_sub_project_project_collection, delete_sub_project
+                )
+                if message.get("error"):
+                    gr.Warning(message["error"])
+                else:
+                    gr.Info(json.dumps(message, ensure_ascii=False))
+                new_sub_project = gr.update(
+                    choices=self.proj_mgmt_utils.proj_setting.get_sub_project_data(
+                        delete_sub_project_project_collection
+                    )
+                )
+                use_project_collection_up = (
+                    new_sub_project
+                    if use_project_collection == delete_sub_project_project_collection
+                    else gr.update()
+                )
+                return (use_project_collection_up, new_sub_project)
+
+            delete_sub_btn.click(
+                delete_sub_project_up_sub_project,
+                inputs=[
+                    delete_sub_project_project_collection,
+                    delete_sub_project,
+                    self.use_project_collection,
+                    self.use_sub_project,
                 ],
                 outputs=[self.use_sub_project, delete_sub_project],
             )

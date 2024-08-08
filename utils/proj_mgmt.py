@@ -70,6 +70,8 @@ class ProjectManagement(LinkUtils):
     def delete_sub_project(self, project_collection_name, sub_project_name):
         try:
             data = self.proj_setting.get_project_data()
+            if project_collection_name not in data:
+                return {"error": "项目集合不存在"}
             if sub_project_name not in data[project_collection_name][1]:
                 return {"error": "子项目不存在"}
             data[project_collection_name][1].remove(sub_project_name)

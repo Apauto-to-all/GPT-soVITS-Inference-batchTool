@@ -76,6 +76,18 @@ class ProjectSetting:
             return sub_project_path
         return None
 
+    # 从上传使用的项目中获取项目路径
+    def get_sub_project_path_from_last(self) -> str:
+        """
+        从上次使用的项目中获取项目路径
+        """
+        last_data = self.get_last_project()
+        if last_data:
+            project_collection_name = list(last_data.keys())[0]
+            sub_project_name = last_data.get(project_collection_name)
+            return self.get_sub_project_path(project_collection_name, sub_project_name)
+        return None
+
     # 储存项目集合数据
     def save_project_data(self, project_data):
         """

@@ -49,7 +49,7 @@ class ProjPage(LinkPages):
                 return
             try:
                 os.system(f"start {sub_project_path} ")
-                gr.Info(f"项目文件夹已打开，注意查看！")
+                gr.Info(f"项目文件夹已打开，注意查看！", duration=2)
             except Exception as e:
                 gr.Warning(f"无法打开文件夹： {e}")
 

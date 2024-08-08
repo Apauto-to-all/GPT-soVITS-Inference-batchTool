@@ -1,4 +1,6 @@
 # 主要功能页面
+import os
+import shutil
 import gradio as gr
 from link_pages import LinkPages
 
@@ -546,13 +548,48 @@ class MainPage(LinkPages):
                 with gr.Row():
                     for j in range(4):  # 每行4个音频组件
                         with gr.Column():
-                            output_audios.append(
-                                gr.Audio(
-                                    label=f"生成的音频{j+i+1}",
-                                    type="filepath",
-                                    visible=False if (i + j) != 0 else True,
+                            with gr.Row():
+                                output_audios.append(
+                                    gr.Audio(
+                                        label=f"生成的音频{j+i+1}",
+                                        type="filepath",
+                                        visible=False if (i + j) != 0 else True,
+                                        min_width=300,
+                                        interactive=False,
+                                    )
                                 )
-                            )
+                                output_dudio_check.append(
+                                    gr.Checkbox(
+                                        label="",
+                                        value=False,
+                                        visible=False if (i + j) != 0 else True,
+                                        min_width=1,
+                                    )
+                                )
+
+            def save_wav_file_to_project(output_dudio_check, audio_file_path):
+                project_folder_path = (
+                    self.proj_mgmt_utils.proj_setting.get_sub_project_path_from_last()
+                )
+                # 将音频文件移动到项目文件夹
+                if not os.path.exists(project_folder_path):
+                    os.makedirs(project_folder_path)
+                # 获取源文件的文件名
+                file_name = os.path.basename(audio_file_path)
+                if output_dudio_check:  # 如果勾选
+                    # copy2可以复制文件的元数据
+                    shutil.copy2(audio_file_path, project_folder_path)
+                else:  # 如果取消勾选，就删除目标文件
+                    # 定义目标文件路径
+                    target_path = os.path.join(project_folder_path, file_name)
+                    if os.path.exists(target_path):
+                        os.remove(target_path)
+
+            for i in range(20):
+                output_dudio_check[i].change(
+                    save_wav_file_to_project,
+                    inputs=[output_dudio_check[i], output_audios[i]],
+                )
 
             # 点击按钮后，调用stop_generation函数，停止生成音频
             def stop_generation():
@@ -565,11 +602,15 @@ class MainPage(LinkPages):
             async def update_audios(model_name, txt, illation_num):
                 self.stop_flag = False
                 # 初始化输出结果
-                results = [
+                results_audio = [
                     gr.update(visible=True if _ == 0 else False, value=None)
                     for _ in range(20)
                 ]
-                yield results
+                results_check = [
+                    gr.update(visible=True if _ == 0 else False, value=False)
+                    for _ in range(20)
+                ]
+                yield results_audio + results_check
                 i = 0
                 async for wav_file_path in self.main_data_utils.interface(
                     model_name, txt, illation_num
@@ -577,8 +618,9 @@ class MainPage(LinkPages):
                     if self.stop_flag:
                         break
                     if i < 20:
-                        results[i] = gr.update(value=wav_file_path, visible=True)
-                        yield results
+                        results_audio[i] = gr.update(value=wav_file_path, visible=True)
+                        results_check[i] = gr.update(visible=True)
+                        yield results_audio + results_check
                     else:
                         break
                     i += 1
@@ -587,7 +629,7 @@ class MainPage(LinkPages):
             btn_generate.click(
                 update_audios,
                 inputs=[model_name_input, txt_input, illation_num_input],
-                outputs=output_audios,
+                outputs=output_audios + output_dudio_check,
             )
 
         # 定义一个列表，包含所有组件，除了模型，文本，连抽次数

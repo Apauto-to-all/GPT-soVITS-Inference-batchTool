@@ -73,6 +73,8 @@ class ProjectSetting:
         """
         保存上次使用的项目
         """
+        if not project_collection_name or not sub_project_name:
+            return
         rs.save_json(
             self.last_project_path,
             {project_collection_name: sub_project_name},

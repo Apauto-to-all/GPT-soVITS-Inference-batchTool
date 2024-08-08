@@ -115,13 +115,13 @@ class ProjPage(LinkPages):
             # 创建项目集合，然后更新项目集合内容
             def create_project_collection_up_project_collection(input_name, input_path):
                 if not input_name or not input_path:
-                    gr.Error("项目集合名称和路径不能为空")
+                    gr.Warning("项目集合名称和路径不能为空")
                     return (gr.update(), gr.update())
                 message = self.proj_mgmt_utils.create_project_collection(
                     input_name, input_path
                 )
                 if message.get("error"):
-                    gr.Error(message["error"])
+                    gr.Warning(message["error"])
                 else:
                     gr.Info(json.dumps(message, ensure_ascii=False))
                 new_project_collection = gr.update(
@@ -140,22 +140,33 @@ class ProjPage(LinkPages):
             )
 
             # 创建子项目，然后更新子项目内容
-            def create_sub_project_up_sub_project(input_name, input_path):
-                if not input_name or not input_path:
-                    gr.Error("项目集合名称和路径不能为空")
-                    return
+            def create_sub_project_up_sub_project(
+                project_collection_name, sub_project_name, use_project_collection
+            ):
+                if not project_collection_name or not sub_project_name:
+                    gr.Warning("项目集合名称和子项目名称不能为空")
+                    return gr.update()
                 message = self.proj_mgmt_utils.create_sub_project(
-                    input_name, input_path
+                    project_collection_name, sub_project_name
                 )
                 if message.get("error"):
-                    gr.Error(message["error"])
+                    gr.Warning(message["error"])
                 else:
                     gr.Info(json.dumps(message, ensure_ascii=False))
+                if project_collection_name == use_project_collection:
+                    return gr.update(
+                        choices=self.proj_mgmt_utils.proj_setting.get_sub_project_data(
+                            project_collection_name
+                        )
+                    )
+                return gr.update()
 
             create_sub_btn.click(
                 create_sub_project_up_sub_project,
                 inputs=[
                     project_collection_input_name,
                     sub_project_input_new_name,
+                    self.use_project_collection,
                 ],
+                outputs=[self.use_sub_project],
             )

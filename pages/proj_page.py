@@ -55,6 +55,25 @@ class ProjPage(LinkPages):
                 inputs=[self.use_project_collection, self.use_sub_project],
             )
 
+        def update_last_use():
+            return (
+                gr.update(
+                    choices=self.proj_mgmt_utils.proj_setting.get_project_data().keys(),
+                    value=self.proj_mgmt_utils.proj_setting.get_last_project_collection(),
+                ),
+                gr.update(
+                    choices=self.proj_mgmt_utils.proj_setting.get_sub_project_data(
+                        self.proj_mgmt_utils.proj_setting.get_last_project_collection()
+                    ),
+                    value=self.proj_mgmt_utils.proj_setting.get_last_sub_project(),
+                ),
+            )
+
+        demo.load(
+            update_last_use,
+            outputs=[self.use_project_collection, self.use_sub_project],
+        )
+
     # 定义一个函数来处理文件夹选择
     def selectFolder(self):
         root = Tk()
@@ -98,12 +117,7 @@ class ProjPage(LinkPages):
                 project_collection_input_name = gr.Dropdown(
                     label="项目集合名称",
                     choices=self.proj_mgmt_utils.proj_setting.get_all_project_collection(),
-                    value=self.proj_mgmt_utils.proj_setting.get_last_project_collection(),
-                    interactive=(
-                        True
-                        if self.proj_mgmt_utils.proj_setting.get_last_project_collection()
-                        else False
-                    ),
+                    interactive=True,
                 )
                 sub_project_input_new_name = gr.Textbox(
                     label="子项目名称",
@@ -112,11 +126,58 @@ class ProjPage(LinkPages):
                 )
                 create_sub_btn = gr.Button("创建子项目", variant="primary", size="sm")
 
+            # 删除项目集合
+            gr.Markdown("### 删除项目集合")
+            with gr.Row():
+                delete_project_collection = gr.Dropdown(
+                    label="项目集合名称",
+                    choices=self.proj_mgmt_utils.proj_setting.get_all_project_collection(),
+                    interactive=True,
+                )
+                delete_btn = gr.Button("删除项目集合", variant="stop", size="sm")
+
+            # 删除子项目
+            gr.Markdown("### 删除子项目")
+            with gr.Row():
+                delete_sub_project_project_collection = gr.Dropdown(
+                    label="项目集合名称",
+                    choices=self.proj_mgmt_utils.proj_setting.get_all_project_collection(),
+                    interactive=True,
+                )
+                delete_sub_project = gr.Dropdown(
+                    label="子项目名称",
+                    interactive=True,
+                )
+                delete_sub_btn = gr.Button("删除子项目", variant="stop", size="sm")
+
+                def update_sub_project(collection):
+                    sub_project_up = gr.update(
+                        choices=self.proj_mgmt_utils.proj_setting.get_sub_project_data(
+                            collection
+                        ),
+                        value=None,
+                    )
+                    return sub_project_up
+
+                delete_sub_project_project_collection.change(
+                    update_sub_project,
+                    inputs=[delete_sub_project_project_collection],
+                    outputs=[delete_sub_project],
+                )
+
+            # 所有需要更新的项目集合
+            all_project_collection = [
+                self.use_project_collection,
+                project_collection_input_name,
+                delete_project_collection,
+                delete_sub_project_project_collection,
+            ]
+
             # 创建项目集合，然后更新项目集合内容
             def create_project_collection_up_project_collection(input_name, input_path):
                 if not input_name or not input_path:
                     gr.Warning("项目集合名称和路径不能为空")
-                    return (gr.update(), gr.update())
+                    return (gr.update(), gr.update(), gr.update(), gr.update())
                 message = self.proj_mgmt_utils.create_project_collection(
                     input_name, input_path
                 )
@@ -127,7 +188,8 @@ class ProjPage(LinkPages):
                 new_project_collection = gr.update(
                     choices=self.proj_mgmt_utils.proj_setting.get_all_project_collection(),
                 )
-                return (new_project_collection, new_project_collection)
+                result = tuple(new_project_collection for _ in all_project_collection)
+                return result
 
             # 绑定创建项目集合的按钮
             create_btn.click(
@@ -136,16 +198,19 @@ class ProjPage(LinkPages):
                     project_collection_input_new_name,
                     project_collection_input_path,
                 ],
-                outputs=[self.use_project_collection, project_collection_input_name],
+                outputs=all_project_collection,
             )
 
             # 创建子项目，然后更新子项目内容
             def create_sub_project_up_sub_project(
-                project_collection_name, sub_project_name, use_project_collection
+                project_collection_name,
+                sub_project_name,
+                use_project_collection,
+                delete_sub_project_project_collection,
             ):
                 if not project_collection_name or not sub_project_name:
                     gr.Warning("项目集合名称和子项目名称不能为空")
-                    return gr.update()
+                    return (gr.update(), gr.update())
                 message = self.proj_mgmt_utils.create_sub_project(
                     project_collection_name, sub_project_name
                 )
@@ -153,13 +218,28 @@ class ProjPage(LinkPages):
                     gr.Warning(message["error"])
                 else:
                     gr.Info(json.dumps(message, ensure_ascii=False))
-                if project_collection_name == use_project_collection:
-                    return gr.update(
+                use_project_collection_up = (
+                    gr.update(
                         choices=self.proj_mgmt_utils.proj_setting.get_sub_project_data(
                             project_collection_name
                         )
                     )
-                return gr.update()
+                    if project_collection_name == use_project_collection
+                    else gr.update()
+                )
+                delete_sub_project_project_collection_up = (
+                    gr.update(
+                        choices=self.proj_mgmt_utils.proj_setting.get_sub_project_data(
+                            project_collection_name
+                        )
+                    )
+                    if project_collection_name == delete_sub_project_project_collection
+                    else gr.update()
+                )
+                return (
+                    use_project_collection_up,
+                    delete_sub_project_project_collection_up,
+                )
 
             create_sub_btn.click(
                 create_sub_project_up_sub_project,
@@ -167,6 +247,7 @@ class ProjPage(LinkPages):
                     project_collection_input_name,
                     sub_project_input_new_name,
                     self.use_project_collection,
+                    delete_sub_project_project_collection,
                 ],
-                outputs=[self.use_sub_project],
+                outputs=[self.use_sub_project, delete_sub_project],
             )

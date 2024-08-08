@@ -113,9 +113,18 @@ class MainData(LinkUtils):
             self.main_setting.config_all_model_last_data_folder, f"{model_name}.json"
         )
         if os.path.exists(model_path):
-            with open(model_path, "r", encoding="utf-8") as f:
-                all_data = json.load(f)
-            return all_data
+            # 尝试次数
+            try_count = 0
+            while try_count < 3:
+                try:
+                    if os.path.getsize(model_path) == 0:  # 检查文件是否为空
+                        return {}
+                    with open(model_path, "r", encoding="utf-8") as f:
+                        all_data = json.load(f)
+                    return all_data
+                except json.JSONDecodeError:
+                    try_count += 1
+                    time.sleep(0.5)
         return {}
 
     # 随机生成推理结果

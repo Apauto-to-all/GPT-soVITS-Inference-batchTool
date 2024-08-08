@@ -19,10 +19,13 @@ class ProjectManagement(LinkUtils):
             data = self.proj_setting.get_project_data()
             if project_collection_name in data:
                 return {"error": "项目集合已存在"}
-            if not os.path.exists(project_path):
+            if not os.path.exists(project_path) or not os.path.isdir(project_path):
                 return {"error": "文件夹不存在"}
-            # 项目合集下的所有文件夹都作为子项目
-            data[project_collection_name] = [project_path, os.listdir(project_path)]
+            # 检测文件路径是否重复
+            for value in data.values():
+                if project_path == value[0]:
+                    return {"error": "该文件夹已使用"}
+            data[project_collection_name] = [project_path, []]
             self.proj_setting.save_project_data(data)
             return {"success": "创建成功"}
         except Exception as e:

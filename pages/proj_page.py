@@ -32,6 +32,31 @@ class ProjPage(LinkPages):
                 value=self.proj_mgmt_utils.proj_setting.get_last_sub_project(),
                 interactive=True,
             )
+            # 打开项目文件夹的按钮
+            open_folder_btn = gr.Button("打开项目文件夹", variant="primary", size="sm")
+
+        def open_sub_project_folder(project_collection, sub_project):
+            if not project_collection or not sub_project:
+                gr.Warning("项目集合和子项目不能为空")
+                return
+            sub_project_path = self.proj_mgmt_utils.proj_setting.get_sub_project_path(
+                project_collection, sub_project
+            )
+            if not os.path.exists(sub_project_path) and not os.path.isdir(
+                sub_project_path
+            ):
+                gr.Warning(f"子项目路径： {sub_project_path} 不存在")
+                return
+            try:
+                os.system(f"start {sub_project_path} ")
+                gr.Info(f"项目文件夹已打开，注意查看！")
+            except Exception as e:
+                gr.Warning(f"无法打开文件夹： {e}")
+
+        open_folder_btn.click(
+            open_sub_project_folder,
+            inputs=[self.use_project_collection, self.use_sub_project],
+        )
 
         def update_sub_project(collection):
             sub_project_up = gr.update(

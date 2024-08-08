@@ -60,6 +60,22 @@ class ProjectSetting:
             else []
         )
 
+    # 获取子项目路径
+    def get_sub_project_path(self, project_collection_name, sub_project_name) -> str:
+        """
+        获取子项目路径
+        """
+        data = self.get_project_data()
+        project_path = (
+            data.get(project_collection_name, ["", []])[0]
+            if project_collection_name in data
+            else None
+        )
+        sub_project_path = os.path.join(project_path, sub_project_name)
+        if os.path.exists(sub_project_path):
+            return sub_project_path
+        return None
+
     # 储存项目集合数据
     def save_project_data(self, project_data):
         """

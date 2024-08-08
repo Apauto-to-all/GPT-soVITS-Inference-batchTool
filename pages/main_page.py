@@ -539,7 +539,8 @@ class MainPage(LinkPages):
                 btn_stop = gr.Button("停停停！", variant="stop", size="lg")
 
             # 输出音频组件
-            output_audios = []
+            output_audios = []  # 展示音频
+            output_dudio_check = []  # 是否保存到项目
             # 按每行4个音频组件进行分组，并为每组创建一个Row
             for i in range(0, 20, 4):  # 从0开始，到20结束，步长为4
                 with gr.Row():

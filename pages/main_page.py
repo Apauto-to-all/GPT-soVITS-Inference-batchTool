@@ -562,18 +562,24 @@ class MainPage(LinkPages):
                                     gr.Checkbox(
                                         label="",
                                         value=False,
+                                        # container=False,  # 不显示外框
+                                        # render=False,
                                         visible=False if (i + j) != 0 else True,
                                         min_width=1,
                                     )
                                 )
 
             def save_wav_file_to_project(output_dudio_check, audio_file_path):
-                if not audio_file_path or not output_dudio_check:
-                    gr.Warning("未选择子项目，或者未生成音频，请检查！")
+                if not audio_file_path:
+                    if output_dudio_check:
+                        gr.Warning("未生成音频文件，请检查！")
                     return
                 project_folder_path = (
                     self.proj_mgmt_utils.proj_setting.get_sub_project_path_from_last()
                 )
+                if not project_folder_path:
+                    gr.Warning("未选择子项目，请检查")
+                    return
                 # 将音频文件移动到项目文件夹
                 if not os.path.exists(project_folder_path):
                     os.makedirs(project_folder_path)

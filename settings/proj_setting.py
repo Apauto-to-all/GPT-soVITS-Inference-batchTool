@@ -60,6 +60,28 @@ class ProjectSetting:
             else []
         )
 
+    # 检测项目集合和子项目是否存在
+    def check_project_and_sub_project(
+        self, project_collection_name, sub_project_name
+    ) -> bool:
+        """
+        检测项目集合和子项目是否存在
+        """
+        if project_collection_name and sub_project_name:  # 如果项目集合和子项目都存在
+            all_project_collection_list = self.get_all_project_collection()
+            if (
+                all_project_collection_list
+                and project_collection_name in all_project_collection_list
+            ):  # 如果项目集合存在，且在项目集合列表中
+                all_sub_project_list = self.get_sub_project_data(
+                    project_collection_name
+                )
+                if (
+                    all_sub_project_list and sub_project_name in all_sub_project_list
+                ):  # 如果子项目存在，且在子项目列表中
+                    return True  # 返回True
+        return False
+
     # 获取子项目路径
     def get_sub_project_path(self, project_collection_name, sub_project_name) -> str:
         """
@@ -100,24 +122,26 @@ class ProjectSetting:
         """
         保存上次使用的项目
         """
-        if not project_collection_name or not sub_project_name:
-            return
-        rs.save_json(
-            self.last_project_path,
-            {project_collection_name: sub_project_name},
-        )
+        if self.check_project_and_sub_project(
+            project_collection_name, sub_project_name
+        ):
+            rs.save_json(
+                self.last_project_path,
+                {project_collection_name: sub_project_name},
+            )
 
     # 读取上次使用的项目，并检测是否可用
     def get_last_project(self):
         data = rs.read_json(self.last_project_path)  # {'项目集合': '子项目'}
-        last_project_collection = list(data.keys())[0] if data else None
-        last_sub_project = data.get(last_project_collection, None) if data else None
-        all_project_collection = self.get_all_project_collection()
-        if last_sub_project and last_project_collection:
-            if last_project_collection in all_project_collection:
-                all_sub_project = self.get_sub_project_data(last_project_collection)
-                if last_sub_project in all_sub_project:
-                    return data
+        last_project_collection = list(data.keys())[0] if data else None  # 项目集合
+        last_sub_project = (
+            data.get(last_project_collection, None) if data else None
+        )  # 子项目
+        # 如果项目集合和子项目都存在
+        if self.check_project_and_sub_project(
+            last_project_collection, last_sub_project
+        ):
+            return data
         return {}
 
     # 获取上次使用的项目合集
@@ -132,12 +156,14 @@ class ProjectSetting:
     # 获取上次使用的子项目
     def get_last_sub_project(self, project_collection=None):
         last_data = self.get_last_project()  # {'项目集合': '子项目'} 上次使用的项目
-        if project_collection:
+        if project_collection:  # 如果提供项目集合
             last_project_collection = list(last_data.keys())[0] if last_data else None
             if project_collection == last_project_collection:
-                return last_data.get(last_project_collection, None)
+                return (
+                    last_data.get(last_project_collection, None) if last_data else None
+                )
             else:
                 all_sub_project = self.get_sub_project_data(project_collection)
                 return all_sub_project[0] if all_sub_project else None
-        else:
+        else:  # 如果没有提供项目集合
             return list(last_data.values())[0] if last_data else None

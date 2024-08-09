@@ -568,6 +568,9 @@ class MainPage(LinkPages):
                                 )
 
             def save_wav_file_to_project(output_dudio_check, audio_file_path):
+                if not audio_file_path or not output_dudio_check:
+                    gr.Warning("未选择子项目，或者未生成音频，请检查！")
+                    return
                 project_folder_path = (
                     self.proj_mgmt_utils.proj_setting.get_sub_project_path_from_last()
                 )

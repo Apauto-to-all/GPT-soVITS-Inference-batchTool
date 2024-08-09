@@ -86,11 +86,14 @@ class MainData(LinkUtils):
         if os.path.exists(self.main_setting.last_test_txt):
             with open(self.main_setting.last_test_txt, "r", encoding="utf-8") as f:
                 test_txt = f.read()
-            return test_txt
+            if test_txt.strip():
+                return test_txt
         return "你好啊，我是你的智能语音助手"
 
     # 保存测试文本
     def save_test_txt(self, test_txt):
+        if not test_txt.strip():
+            test_txt = "你好啊，我是你的智能语音助手"
         with open(self.main_setting.last_test_txt, "w", encoding="utf-8") as f:
             f.write(test_txt)
 

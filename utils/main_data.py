@@ -178,7 +178,8 @@ class MainData(LinkUtils):
         results = []
         for _ in range(illation_num):  # 生成多个推理结果
             # 确保多次推理结果，每个情感都有机会被选中
-            emotion = random.choice(all_data.get("emotions", ["default"]))
+            all_emotions = all_data.get("emotions")
+            emotion = random.choice(all_emotions if all_emotions else ["default"])
             top_k = is_random_get_value(all_data.get("top_k", [False, 5, 1, 10]), True)
             top_p = is_random_get_value(
                 all_data.get("top_p", [False, 0.8, 0.7, 0.9]), False

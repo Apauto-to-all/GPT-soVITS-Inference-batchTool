@@ -43,7 +43,7 @@ class MainSetting:
     def get_model_emotions(self) -> dict:
         # 读取情感列表
         try:
-            response = requests.get(self.api_url_character_list)
+            response = requests.get(self.api_url_character_list, timeout=5)
             if response.status_code == 200:
                 return response.json()  # 获取所有模型的情感列表
             else:

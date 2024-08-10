@@ -24,6 +24,8 @@ class MainData(LinkUtils):
     def __init__(self):
         super().__init__()
         self.main_setting  # 获取所有主页面设置的数据
+        if self.main_setting.is_auto_clean_temp:  # 如果开启自动清理文件
+            self.auto_clean_temp()
 
     # 推理获取结果
     async def interface(self, model_name, txt, illation_num=5):
@@ -292,10 +294,12 @@ class MainData(LinkUtils):
             return
         # 获取当前时间
         now = datetime.datetime.now()
-        if self.temp_file_save_time < 0:
-            self.temp_file_save_time = 7  # 默认保存7天
+        if self.main_setting.temp_file_save_time < 0:
+            self.main_setting.temp_file_save_time = 7  # 默认保存7天
         # 计算过期时间
-        expire_time = now - datetime.timedelta(days=self.temp_file_save_time)
+        expire_time = now - datetime.timedelta(
+            days=self.main_setting.temp_file_save_time
+        )
         # 遍历临时文件夹
         for file_name in os.listdir(self.main_setting.temp_folder):
             # 获取文件的创建时间

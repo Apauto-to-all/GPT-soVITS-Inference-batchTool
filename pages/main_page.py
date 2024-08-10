@@ -626,6 +626,8 @@ class MainPage(LinkPages):
                 ):
                     if self.stop_flag:
                         break
+                    if not wav_file_path:
+                        break
                     if i < 20:
                         results_audio[i] = gr.update(value=wav_file_path, visible=True)
                         results_check[i] = gr.update(visible=True)

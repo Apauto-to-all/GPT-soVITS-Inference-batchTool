@@ -11,6 +11,7 @@ import re
 import time
 import json
 import requests
+import gradio as gr
 
 # 继承所有设置数据
 from link_utils import LinkUtils
@@ -40,6 +41,9 @@ class MainData(LinkUtils):
                 txt, model_name, selected_result
             )  # 发送请求，返回音频文件路径
             await asyncio.sleep(0.1)  # 等待0.1秒
+            if not wav_file_path:
+                yield None
+                break
             yield wav_file_path  # 返回音频文件路径
 
     # 获取文件名储存格式
@@ -52,9 +56,9 @@ class MainData(LinkUtils):
         # 多余的字符用省略号代替
         if len(txt) > self.main_setting.max_prefix_length:
             # 文件名中加入时间戳，确保每次都不同
-            return txt[: self.main_setting.max_prefix_length] + "..." + "+" + timestamp
+            return timestamp + "..." + "+" + txt[: self.main_setting.max_prefix_length]
         else:
-            return txt + "+" + timestamp
+            return timestamp + "+" + txt
 
     # 获取配置储存最后的模型
     def get_last_model(self, all_models):
@@ -279,9 +283,13 @@ class MainData(LinkUtils):
         }
         response = requests.post(self.main_setting.api_url_txt_to_wav, json=data)
         # 如果是错误信息，返回错误信息
-        if response.status_code != 200:
-            print(response.json())
-            return
+        try:
+            json_data = json.loads(response.text)
+            warn_message = json_data.get("detail")
+            gr.Warning(warn_message if warn_message else response.text)
+            return None
+        except Exception as e:
+            pass
         # 保持wav文件
         with open(outputFilePath, "wb") as f:
             f.write(response.content)

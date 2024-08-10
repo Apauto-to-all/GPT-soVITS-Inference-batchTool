@@ -6,14 +6,10 @@ import requests
 from mutagen.wave import WAVE
 from mutagen.id3 import TXXX
 
-# 继承所有设置用的数据
-from link_utils import LinkUtils
 
-
-class MetadataWav(LinkUtils):
+class MetadataWav:
     def __init__(self):
-        super().__init__()
-        self.main_setting
+        pass
 
     # 写入元数据，wav文件，写入元数据
     def add_metadata_to_wav(self, wav_path, metadata_dict):

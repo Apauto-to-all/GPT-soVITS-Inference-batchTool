@@ -56,9 +56,9 @@ class MainData(LinkUtils):
         # 多余的字符用省略号代替
         if len(txt) > self.main_setting.max_prefix_length:
             # 文件名中加入时间戳，确保每次都不同
-            return timestamp + "..." + "+" + txt[: self.main_setting.max_prefix_length]
+            return timestamp + "_" + txt[: self.main_setting.max_prefix_length] + "..."
         else:
-            return timestamp + "+" + txt
+            return timestamp + "_" + txt
 
     # 获取配置储存最后的模型
     def get_last_model(self, all_models):

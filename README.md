@@ -104,7 +104,7 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 #### 音频文件格式
 
-生成的音频文件为`wav`格式，`GPT-soVITS`和`GPT-soVITS-Inference`的推理下载的音频都是以`audio.wav`的形式返回的，难以区分，所以本项目解决了这个问题，将推理的文字的前n个字符作为文件名的一部分，加上时间戳，以区分不同的音频文件，比如：`这是一个测试……+1631234567.wav`
+生成的音频文件为`wav`格式，`GPT-soVITS`和`GPT-soVITS-Inference`的推理下载的音频都是以`audio.wav`的形式返回的，难以区分，所以本项目解决了这个问题，将生成时间戳+推理文字前n个字符作为文件名，以区分不同的音频文件，例如：`1634160000_这是一个测试文本…….wav`。
 
 如果有满意的结果，可以在音频右上角点击下载按钮，浏览器会自动下载音频文件。
 

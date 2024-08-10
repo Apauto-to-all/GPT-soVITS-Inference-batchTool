@@ -20,16 +20,10 @@ class ProjPage(LinkPages):
         with gr.Row():
             self.use_project_collection = gr.Dropdown(
                 label="项目集合",
-                choices=self.proj_mgmt_utils.proj_setting.get_project_data().keys(),
-                value=self.proj_mgmt_utils.proj_setting.get_last_project_collection(),
                 interactive=True,
             )
             self.use_sub_project = gr.Dropdown(
                 label="子项目",
-                choices=self.proj_mgmt_utils.proj_setting.get_sub_project_data(
-                    self.proj_mgmt_utils.proj_setting.get_last_project_collection()
-                ),
-                value=self.proj_mgmt_utils.proj_setting.get_last_sub_project(),
                 interactive=True,
             )
             # 打开项目文件夹的按钮
@@ -74,6 +68,7 @@ class ProjPage(LinkPages):
             inputs=[self.use_project_collection],
             outputs=[self.use_sub_project],
         )
+
         for change_project in [self.use_project_collection, self.use_sub_project]:
             change_project.change(
                 self.proj_mgmt_utils.proj_setting.save_last_project,
@@ -83,7 +78,7 @@ class ProjPage(LinkPages):
         def update_last_use():
             return (
                 gr.update(
-                    choices=self.proj_mgmt_utils.proj_setting.get_project_data().keys(),
+                    choices=self.proj_mgmt_utils.proj_setting.get_all_project_collection(),
                     value=self.proj_mgmt_utils.proj_setting.get_last_project_collection(),
                 ),
                 gr.update(
@@ -141,7 +136,6 @@ class ProjPage(LinkPages):
             with gr.Row():
                 project_collection_input_name = gr.Dropdown(
                     label="项目集合名称",
-                    choices=self.proj_mgmt_utils.proj_setting.get_all_project_collection(),
                     interactive=True,
                 )
                 sub_project_input_new_name = gr.Textbox(
@@ -156,7 +150,6 @@ class ProjPage(LinkPages):
             with gr.Row():
                 delete_project_collection = gr.Dropdown(
                     label="项目集合名称",
-                    choices=self.proj_mgmt_utils.proj_setting.get_all_project_collection(),
                     interactive=True,
                 )
                 delete_btn = gr.Button("删除项目集合", variant="stop", size="sm")
@@ -166,7 +159,6 @@ class ProjPage(LinkPages):
             with gr.Row():
                 delete_sub_project_project_collection = gr.Dropdown(
                     label="项目集合名称",
-                    choices=self.proj_mgmt_utils.proj_setting.get_all_project_collection(),
                     interactive=True,
                 )
                 delete_sub_project = gr.Dropdown(
@@ -197,6 +189,20 @@ class ProjPage(LinkPages):
                 delete_project_collection,
                 delete_sub_project_project_collection,
             ]
+
+            # 自动加载项目集合
+            def load_project_collection():
+                return tuple(
+                    gr.update(
+                        choices=self.proj_mgmt_utils.proj_setting.get_all_project_collection(),
+                    )
+                    for _ in all_project_collection[1:]
+                )
+
+            demo.load(
+                load_project_collection,
+                outputs=all_project_collection[1:],
+            )
 
             # 创建项目集合，然后更新项目集合内容
             def create_project_collection_up_project_collection(input_name, input_path):

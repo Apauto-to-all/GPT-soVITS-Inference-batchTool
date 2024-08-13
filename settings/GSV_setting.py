@@ -91,8 +91,8 @@ parser.add_argument("-b", "--bert_path", type=str, default=g_config.bert_path, h
 
 class GSVSetting:
     def __init__(self):
-        self.GSV_config_path = os.path.join(
-            config.config_settings_folder, "GSV_setting.json"
+        self.GSV_api_config_path = os.path.join(
+            config.config_settings_folder, "GSV_api_config.json"
         )
         # GSV文件夹路径
         self.GSV_path = os.path.join(config.config_last_data_GSV, "GSV_path.txt")
@@ -124,8 +124,12 @@ class GSVSetting:
             self.GSV_path,
             GSV_folder_path,
         ):
-            self.save_default_setting(GSV_folder_path)
+            self.save_api_default_setting()
             return True
+
+    # 获取GSV文件夹路径
+    def get_GSV_path(self) -> str:
+        return rs.read_txt(self.GSV_path)
 
     # 检测GPT-soVITS的文件夹下是否存在runtime文件夹（python嵌入式环境文件夹）
     def check_GSV_python_embedded_path_get(self, GSV_folder_path) -> str:
@@ -181,46 +185,48 @@ class GSVSetting:
             return data[1]
         return None
 
-    # 获取GSV配置文件
-    def get_GSV_config(self) -> dict:
-        data = rs.read_json(self.GSV_config_path)
-        if data:
-            return data
-        GSV_path = rs.read_txt(self.GSV_path)
-        if GSV_path:
-            self.save_default_setting(GSV_path)
-            return rs.read_json(self.GSV_config_path)
-        return {}
+    # 获取GSV的python嵌入式环境python路径
+    def get_GSV_python_embedded_python(self) -> str:
+        data = rs.read_json(self.GSV_python_embedded_path)
+        if data and len(data) == 2:
+            python_embedded_path = os.path.join(data[0], "python")
+            return python_embedded_path
+        return None
+
+    # 获取GSV的python嵌入式环境路径
+    def get_GSV_python_embedded_path(self) -> str:
+        data = rs.read_json(self.GSV_python_embedded_path)
+        if data and len(data) == 2:
+            return data[0]
+        return None
 
     # 保存默认设置
-    def save_default_setting(self, GSV_path: str = "") -> dict:
+    def save_api_default_setting(self):
         # GSV文件夹路径
-        if not GSV_path:
-            return {}
+        GSV_path = rs.read_txt(self.GSV_path)
+        if not self.check_GSV_path(GSV_path):
+            return
         # api程序路径
         api_file_path = os.path.join(GSV_path, "api.py")
-        if not os.path.exists(api_file_path):
-            return {}
         # 设置api推理设备cuda or cpu（由GSV的api.py文件决定）
         device = ""
         # 设置api绑定地址
         address = "127.0.0.1"
         # 设置api绑定端口
         port = 9880
-        # 选择半精度（hp）或全精度（fh）
-        precision = "hp"  # fp / hp
-        # 设置api流式返回模式
+        # 选择半精度（hp）或全精度（fh），默认为半精度
+        precision = ""  # fp / hp
+        # 设置api流式返回模式，不启用
         stream_mode = "close"  # close / normal / keepalive
         # 设置返回的音频编码格式
-        media_type = "wav"
-        # 设置文本切分符号设定
-        cut_punc = ""
+        media_type = (
+            ""  # 返回的音频编码格式, 流式默认ogg, 非流式默认wav, "wav", "ogg", "aac"
+        )
         # 设置cnhubert路径
         hubert_path = ""
         # 设置bert路径
         bert_path = ""
         data = {
-            "GSV_path": GSV_path,
             "api_file_path": api_file_path,
             "device": device,
             "address": address,
@@ -228,8 +234,30 @@ class GSVSetting:
             "precision": precision,
             "stream_mode": stream_mode,
             "media_type": media_type,
-            "cut_punc": cut_punc,
             "hubert_path": hubert_path,
             "bert_path": bert_path,
         }
-        rs.save_json(self.GSV_config_path, data)
+        rs.save_json(self.GSV_api_config_path, data)
+
+    # 保存GSV的api配置
+    def save_GSV_api_config(self, data: dict) -> bool:
+        """
+        保存GSV的api配置
+        :param data: GSV的api配置
+        :return: 是否保存成功
+        """
+        if not data:
+            return False
+        rs.save_json(self.GSV_api_config_path, data)
+        return True
+
+    # 获取GSV配置文件
+    def get_GSV_api_config(self) -> dict:
+        data = rs.read_json(self.GSV_api_config_path)
+        if data:
+            return data
+        GSV_path = rs.read_txt(self.GSV_path)
+        if GSV_path:
+            self.save_api_default_setting()
+            return rs.read_json(self.GSV_api_config_path)
+        return {}

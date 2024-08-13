@@ -21,13 +21,13 @@ class ReadAndSave:
         :return: 返回读取的数据
         """
         if not self.check_file(file_path):
-            return None
+            return {}
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             print(e)
-            return None
+            return {}
 
     # 保存json文件
     def save_json(self, file_path, data):

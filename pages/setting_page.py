@@ -11,18 +11,17 @@ class SettingPage(LinkPages):
 
     def showSettingPage(self, demo):
         # 显示一个
-        with gr.Tab(label="设置管理"):
-            gr.Markdown(
-                "修改设置后，需要点击“保存设置”按钮，注意：需要**重启**程序才能生效！！！"
-            )
-            self.save_setting = gr.Button("保存设置", variant="primary", size="lg")
-            self.mainSetting()  # 主设置页面
+        gr.Markdown(
+            "修改设置后，需要点击“保存设置”按钮，注意：需要**重启**程序才能生效！！！"
+        )
+        self.save_setting = gr.Button("保存设置", variant="primary", size="lg")
+        self.mainSetting()  # 主设置页面
 
-            # 保存设置
-            def warning():
-                gr.Info("保存成功，下次重启程序生效！")
+        # 保存设置
+        def warning():
+            gr.Info("保存成功，下次重启程序生效！")
 
-            self.save_setting.click(warning)
+        self.save_setting.click(warning)
 
     def mainSetting(self):
         with gr.Tab(label="主设置"):

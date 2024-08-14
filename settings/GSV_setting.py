@@ -91,6 +91,7 @@ parser.add_argument("-b", "--bert_path", type=str, default=g_config.bert_path, h
 
 class GSVSetting:
     def __init__(self):
+        # GSV_api设置
         self.GSV_api_config_path = os.path.join(
             config.config_settings_folder, "GSV_api_config.json"
         )
@@ -100,6 +101,14 @@ class GSVSetting:
         self.GSV_python_embedded_path = os.path.join(
             config.config_last_data_GSV, "GSV_python_embedded_path.json"
         )
+        # GSV的model路径
+        self.GSV_model_path = config.model_folder
+        # GSV所有模型数据
+        self.GSV_model_data_config_path = os.path.join(
+            config.config_settings_folder, "GSV_model_data_config.json"
+        )
+        # 显示音频数量
+        self.show_audio_num = 30
 
     # 检测GPT-soVITS的文件夹
     def check_GSV_path(self, GSV_folder_path) -> bool:
@@ -261,3 +270,80 @@ class GSVSetting:
             self.save_api_default_setting()
             return rs.read_json(self.GSV_api_config_path)
         return {}
+
+    # 检测模型所有数据是否正确
+    def check_model_data(
+        self, model_name, GPT_model_path, SoVITS_model_path, audio_data
+    ):
+        """
+        检测模型所有数据是否正确
+        :param model_name: 模型名称
+        :param GPT_model_path: GPT模型路径
+        :param SoVITS_model_path: SoVITS模型路径
+        :param audio_data: 参考音频数据，格式为dict
+        :return: 是否正确
+        """
+        if os.path.exists(os.path.join(self.GSV_model_path, model_name)):
+            if os.path.exists(GPT_model_path) and os.path.exists(SoVITS_model_path):
+                if audio_data:
+                    for _, v in audio_data.items():
+                        if len(v) == 3:
+                            if os.path.exists(v[0]):
+                                return True
+        return False
+
+    # 保存模型的所有数据
+    def save_model_data(
+        self, model_name, GPT_model_path, SoVITS_model_path, audio_data
+    ) -> bool:
+        """
+        保存模型的所有数据
+        :param model_name: 模型名称
+        :param GPT_model_path: GPT模型路径
+        :param SoVITS_model_path: SoVITS模型路径
+        :param audio_data: 参考音频数据，格式为dict
+        :return: 是否保存成功
+        """
+        if not self.check_model_data(
+            model_name, GPT_model_path, SoVITS_model_path, audio_data
+        ):
+            return False
+        model_data = {
+            "GPT_model_path": GPT_model_path,
+            "SoVITS_model_path": SoVITS_model_path,
+            "audio_data": audio_data,
+        }
+        # 读取原有数据
+        all_data = rs.read_json(self.GSV_model_data_config_path)
+        if not all_data:
+            all_data = {}
+        all_data[model_name] = model_data
+        rs.save_json(self.GSV_model_data_config_path, all_data)
+        return True
+
+    # 读取目标模型的所有数据
+    def get_GSV_model_data(self, model_name):
+        all_model_data = rs.read_json(self.GSV_model_data_config_path)
+        if all_model_data:
+            return all_model_data.get(model_name, {})
+
+
+{
+    "模型名称（文件夹名）": {
+        "GPT_model_path": "GPT模型路径",
+        "SoVITS_model_path": "SoVITS模型路径",
+        "audio_data": {
+            "情感1": [
+                "音频1路径",
+                "音频文本",
+                "音频语言",
+            ],
+            "情感2": [
+                "音频2路径",
+                "音频文本",
+                "音频语言",
+            ],
+        },
+    },
+    "模型名称1（文件夹名）": {...},
+}

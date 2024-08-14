@@ -3,13 +3,6 @@ import os
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import asyncio
-import datetime
-import random
-import re
-import time
-import json
-import requests
 import gradio as gr
 from tkinter import Tk, filedialog
 
@@ -63,7 +56,7 @@ class GSVUtils(GSV_setting.GSVSetting):
         )
         return (GSV_path_input, GSV_python_embedded_path_input)
 
-    # 加载api配置文件
+    # 加载api配置文件，并进行错误处理
     def load_api_config(self):
         api_config = self.get_GSV_api_config()
         # 对一些数据进行处理
@@ -115,4 +108,150 @@ class GSVUtils(GSV_setting.GSVSetting):
             GSV_media_type_input,
             GSV_hubert_path_input,
             GSV_bert_path_input,
+        )
+
+    # 加载模型列表
+    def get_all_GSV_model(self) -> list:
+        # 读取一个文件夹下的文件夹列表
+        model_path = self.GSV_model_path
+        if not os.path.exists(model_path):
+            # 如果不存在，创建文件夹，多文件夹
+            os.makedirs(model_path, exist_ok=True)
+            return []
+        # 读取文件夹
+        return [
+            _
+            for _ in os.listdir(model_path)
+            if os.path.isdir(os.path.join(model_path, _))
+        ]
+
+    # 加载GPT模型列表
+    def reload_GPT_model_list(self, model_name, model_type="ckpt"):
+        model_path = self.GSV_model_path
+        if not os.path.exists(os.path.join(model_path, model_name)):
+            os.makedirs(os.path.join(model_path, model_name), exist_ok=True)
+            return []
+        return [
+            os.path.join(self.GSV_model_path, model_name, _)
+            for _ in os.listdir(os.path.join(model_path, model_name))
+            if _.endswith(model_type)
+        ]
+
+    # 加载SoVITS模型列表
+    def reload_SoVITS_model_list(self, model_name):
+        return self.reload_GPT_model_list(model_name, "pth")
+
+    # 加载模型的参考音频列表
+    def reload_model_audio_list(self, model_name):
+        audio_extensions = [".wav", ".mp3", ".flac", ".aac", ".ogg", ".m4a", ".wma"]
+        return self.reload_GPT_model_list(model_name, tuple(audio_extensions))
+
+    # 在gr上显示所有模型
+    def reload_gr_GSV_model(self):
+        all_GSV_model_list = self.get_all_GSV_model()
+        return gr.update(
+            choices=all_GSV_model_list,
+            value=all_GSV_model_list[0] if all_GSV_model_list else None,
+        )
+
+    # 加载所有模型数据
+    def reload_GSV_model_audio(self, model_name):
+        load_model_config = self.get_GSV_model_data(model_name)  # 加载模型配置
+
+        all_GSV_model_list = self.reload_GPT_model_list(model_name)
+        all_SoVITS_model_list = self.reload_SoVITS_model_list(model_name)
+        all_audio_input_list = self.reload_model_audio_list(model_name)
+
+        all_GSV_model = gr.update(
+            choices=all_GSV_model_list if all_GSV_model_list else [],
+            value=(
+                load_model_config.get("GPT_model_path")
+                if load_model_config and load_model_config.get("GPT_model_path")
+                else all_GSV_model_list[0] if all_GSV_model_list else None
+            ),
+        )
+        all_SoVITS_model = gr.update(
+            choices=all_SoVITS_model_list if all_SoVITS_model_list else [],
+            value=(
+                load_model_config.get("SoVITS_model_path")
+                if load_model_config and load_model_config.get("SoVITS_model_path")
+                else all_SoVITS_model_list[0] if all_SoVITS_model_list else None
+            ),
+        )
+        use_audio_data = (
+            load_model_config.get("audio_data", {}) if load_model_config else {}
+        )
+        all_audio_emotion = []
+        all_audio_input = []
+        all_audio_text = []
+        all_audio_language = []
+        for i in range(self.show_audio_num):
+            if all_audio_input_list:
+                if use_audio_data:
+                    for use_emotion, use_dict in use_audio_data.items():
+                        if use_emotion and len(use_dict) == 3:
+                            all_audio_emotion.append(
+                                gr.update(
+                                    visible=True,
+                                    value=use_emotion,
+                                )
+                            )
+                            all_audio_input.append(
+                                gr.update(
+                                    visible=True,
+                                    value=use_dict[0],
+                                )
+                            )
+                            if use_dict[0] in all_audio_input_list:
+                                all_audio_input_list.remove(use_dict[0])
+                            all_audio_text.append(
+                                gr.update(
+                                    visible=True,
+                                    value=use_dict[1],
+                                )
+                            )
+                            all_audio_language.append(
+                                gr.update(
+                                    visible=True,
+                                    value=use_dict[2],
+                                )
+                            )
+                            i += 1
+
+                all_audio_emotion.append(
+                    gr.update(
+                        visible=True,
+                    )
+                )
+                all_audio_input.append(
+                    gr.update(
+                        visible=True,
+                        value=all_audio_input_list.pop(0),
+                    )
+                )
+                all_audio_text.append(
+                    gr.update(
+                        visible=True,
+                    )
+                )
+                all_audio_language.append(
+                    gr.update(
+                        visible=True,
+                    )
+                )
+            else:
+                for j in [
+                    all_audio_emotion,
+                    all_audio_input,
+                    all_audio_text,
+                    all_audio_language,
+                ]:
+                    j.append(gr.update(visible=False))
+        return (
+            [all_GSV_model]
+            + [all_SoVITS_model]
+            + all_audio_emotion
+            + all_audio_input
+            + all_audio_text
+            + all_audio_language
         )

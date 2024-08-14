@@ -5,7 +5,7 @@ import os
 # 检查文件夹是否存在，不存在则创建
 def check_folder(folder_path: str):
     if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
+        os.makedirs(folder_path, exist_ok=True)
 
 
 # 配置文件夹

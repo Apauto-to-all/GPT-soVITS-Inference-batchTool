@@ -582,7 +582,7 @@ class MainPage(LinkPages):
                     return
                 # 将音频文件移动到项目文件夹
                 if not os.path.exists(project_folder_path):
-                    os.makedirs(project_folder_path)
+                    os.makedirs(project_folder_path, exist_ok=True)
                 # 获取源文件的文件名
                 file_name = os.path.basename(audio_file_path)
                 if output_dudio_check:  # 如果勾选

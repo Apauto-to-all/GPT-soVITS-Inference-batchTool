@@ -43,7 +43,7 @@ class ProjectManagement(LinkUtils):
 
             # 如果文件夹不存在，就创建文件夹
             if not os.path.exists(sub_project_path):
-                os.makedirs(sub_project_path)
+                os.makedirs(sub_project_path, exist_ok=True)
             # 添加到子项目中
             data[project_collection_name][1].append(sub_project_name)
             # 保存数据

@@ -25,6 +25,8 @@ class AllPages:
             self.proj_page.showSelectProj(demo)
             # 2个tab页面，主页面
             self.main_page.showMainPage(demo)
+            # 一个GSV模型管理页面
+            self.GSV_page.showGSVmodelManagePage(demo)
             # 1个项目管理页面
             self.proj_page.showProjMgmt(demo)
             with gr.Tab(label="设置"):

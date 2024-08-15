@@ -39,7 +39,7 @@ class MainPage(LinkPages):
                     f"## 如果你切换了后端服务的地址，或者端口，需要在 {self.main_data_utils.main_setting.main_data_path} 中修改"
                 )
             return
-        with gr.Tab(label="设置随机参数"):
+        with gr.Tab(label="设置GPT-soVITS-Inference参数"):
             # 添加一个提示文本
             gr.Markdown(
                 "## 提示：设置完随机参数后（设置会自动保存），切换到“开始抽卡”标签页，点击“点击抽卡”按钮即可开始使用"

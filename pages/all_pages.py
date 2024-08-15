@@ -27,6 +27,8 @@ class AllPages:
             self.main_page.showMainPage(demo)
             # 一个GSV模型管理页面
             self.GSV_page.showGSVmodelManagePage(demo)
+            # 一个GSV推理参数设置页面
+            self.GSV_page.showGSVInferenceSettingPage(demo)
             # 1个项目管理页面
             self.proj_page.showProjMgmt(demo)
             with gr.Tab(label="设置"):

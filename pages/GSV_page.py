@@ -297,3 +297,32 @@ class GSVPage(GSV_utils.GSVUtils):
                 + all_audio_text
                 + all_audio_language,
             )
+
+    # 设置推理参数
+    def showGSVInferenceSettingPage(self, demo: gr.Blocks):
+        with gr.Tab(label="设置GPT-soVITS参数"):
+            # 添加一个提示文本
+            gr.Markdown("## 参数不多，支持随机")
+            gr.Markdown("## 模型与情感选择")
+
+            # 模型选择，下拉框，情感使用，多选框
+            with gr.Row():
+                model_name_input = gr.Dropdown(
+                    label="选择模型名称",
+                    interactive=True,
+                    scale=1,
+                )
+                # 勾选需要使用的情感
+                emotions_input = gr.CheckboxGroup(
+                    label="选择需要使用的情感",
+                    interactive=True,
+                    scale=2,
+                )
+                # 切换模型，加载情感
+                model_name_input.change(
+                    self.reload_gr_GSV_emotions,
+                    inputs=model_name_input,
+                    outputs=emotions_input,
+                )
+            # 加载模型和上一次使用的模型
+            demo.load(self.reload_gr_last_GSV_model, outputs=model_name_input)

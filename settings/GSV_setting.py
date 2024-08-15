@@ -87,6 +87,25 @@ parser.add_argument("-cp", "--cut_punc", type=str, default="", help="文本切�
 parser.add_argument("-hb", "--hubert_path", type=str, default=g_config.cnhubert_path, help="覆盖config.cnhubert_path")
 parser.add_argument("-b", "--bert_path", type=str, default=g_config.bert_path, help="覆盖config.bert_path")
 """
+{
+    "模型名称（文件夹名）": {
+        "GPT_model_path": "GPT模型路径",
+        "SoVITS_model_path": "SoVITS模型路径",
+        "audio_data": {
+            "情感1": [
+                "音频1路径",
+                "音频文本",
+                "音频语言",
+            ],
+            "情感2": [
+                "音频2路径",
+                "音频文本",
+                "音频语言",
+            ],
+        },
+    },
+    "模型名称1（文件夹名）": {...},
+}
 
 
 class GSVSetting:
@@ -106,6 +125,10 @@ class GSVSetting:
         # GSV所有模型数据
         self.GSV_model_data_config_path = os.path.join(
             config.config_settings_folder, "GSV_model_data_config.json"
+        )
+        # 上一次使用的模型
+        self.last_use_model = os.path.join(
+            config.config_last_data_GSV, "last_model.txt"
         )
         # 显示音频数量
         self.show_audio_num = 10
@@ -322,29 +345,37 @@ class GSVSetting:
         rs.save_json(self.GSV_model_data_config_path, all_data)
         return True
 
-    # 读取目标模型的所有数据
+    # 读取已经保存的模型的所有数据
     def get_GSV_model_data(self, model_name):
         all_model_data = rs.read_json(self.GSV_model_data_config_path)
         if all_model_data:
             return all_model_data.get(model_name, {})
 
+    # 获取所有使用的模型
+    def get_all_use_GSV_model_data(self) -> list:
+        all_model = rs.read_json(self.GSV_model_data_config_path)
+        return list(all_model.keys()) if all_model else []
 
-{
-    "模型名称（文件夹名）": {
-        "GPT_model_path": "GPT模型路径",
-        "SoVITS_model_path": "SoVITS模型路径",
-        "audio_data": {
-            "情感1": [
-                "音频1路径",
-                "音频文本",
-                "音频语言",
-            ],
-            "情感2": [
-                "音频2路径",
-                "音频文本",
-                "音频语言",
-            ],
-        },
-    },
-    "模型名称1（文件夹名）": {...},
-}
+    # 获取所有情感
+    def get_all_emotion(self, model_name) -> list:
+        all_model_data = rs.read_json(self.GSV_model_data_config_path)
+        if all_model_data:
+            model_data = all_model_data.get(model_name, {})
+            return list(model_data.get("audio_data", {}).keys())
+        return []
+
+    # 获取上一次的模型
+    def get_last_use_model(self) -> str:
+        all_model_list = self.get_all_use_GSV_model_data()
+        data = rs.read_json(self.last_use_model)
+        return (
+            data
+            if data and data in all_model_list
+            else all_model_list[0] if all_model_list else None
+        )
+
+    # 保存上一次使用的模型
+    def save_last_model(self, model_name):
+        all_model_list = self.get_all_use_GSV_model_data()
+        if model_name in all_model_list:
+            rs.save_txt(self.last_use_model, model_name)

@@ -110,8 +110,8 @@ class GSVUtils(GSV_setting.GSVSetting):
             GSV_bert_path_input,
         )
 
-    # 加载模型列表
-    def get_all_GSV_model(self) -> list:
+    # 加载模型列表，本地储存
+    def get_all_GSV_model_loacl(self) -> list:
         # 读取一个文件夹下的文件夹列表
         model_path = self.GSV_model_path
         if not os.path.exists(model_path):
@@ -148,7 +148,7 @@ class GSVUtils(GSV_setting.GSVSetting):
 
     # 在gr上显示所有模型
     def reload_gr_GSV_model(self):
-        all_GSV_model_list = self.get_all_GSV_model()
+        all_GSV_model_list = self.get_all_GSV_model_loacl()
         return gr.update(
             choices=all_GSV_model_list,
             value=all_GSV_model_list[0] if all_GSV_model_list else None,
@@ -320,3 +320,18 @@ class GSVUtils(GSV_setting.GSVSetting):
             gr.Info(f"模型:“ {model_name} ”保存成功！")
         else:
             gr.Warning(f"模型:“ {model_name} ”保存失败！")
+
+    # 切换模型，重新加载情感
+    def reload_gr_GSV_emotions(self, model_name):
+        load_model_config = self.get_all_emotion(model_name)
+        return gr.update(
+            choices=load_model_config,
+        )
+
+    # 加载上一次使用的模型
+    def reload_gr_last_GSV_model(self):
+        last_model = self.get_last_use_model()
+        return gr.update(
+            choices=self.get_all_use_GSV_model_data(),
+            value=last_model,
+        )

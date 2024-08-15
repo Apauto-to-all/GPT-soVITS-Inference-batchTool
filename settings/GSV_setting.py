@@ -283,7 +283,7 @@ class GSVSetting:
         rs.save_json(self.GSV_api_config_path, data)
         return True
 
-    # 获取GSV配置文件
+    # 获取GSV的API配置文件
     def get_GSV_api_config(self) -> dict:
         data = rs.read_json(self.GSV_api_config_path)
         if data:

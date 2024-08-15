@@ -185,68 +185,84 @@ class GSVUtils(GSV_setting.GSVSetting):
         all_audio_input = []
         all_audio_text = []
         all_audio_language = []
+        all_audio_preview = []
         for i in range(self.show_audio_num):
+            if use_audio_data:
+                use_emotion, use_dict = use_audio_data.popitem()
+                if len(use_dict) == 3 and os.path.exists(use_dict[0]):
+                    all_audio_emotion.append(
+                        gr.update(
+                            visible=True,
+                            value=use_emotion,
+                        )
+                    )
+                    all_audio_input.append(
+                        gr.update(
+                            visible=True,
+                            value=use_dict[0],
+                        )
+                    )
+                    if use_dict[0] in all_audio_input_list:
+                        all_audio_input_list.remove(use_dict[0])
+                    all_audio_text.append(
+                        gr.update(
+                            visible=True,
+                            value=use_dict[1],
+                        )
+                    )
+                    all_audio_language.append(
+                        gr.update(
+                            visible=True,
+                            value=use_dict[2],
+                        )
+                    )
+                    all_audio_preview.append(
+                        gr.update(
+                            visible=True,
+                            value=use_dict[0],
+                        )
+                    )
+                    continue
             if all_audio_input_list:
-                if use_audio_data:
-                    for use_emotion, use_dict in use_audio_data.items():
-                        if use_emotion and len(use_dict) == 3:
-                            all_audio_emotion.append(
-                                gr.update(
-                                    visible=True,
-                                    value=use_emotion,
-                                )
-                            )
-                            all_audio_input.append(
-                                gr.update(
-                                    visible=True,
-                                    value=use_dict[0],
-                                )
-                            )
-                            if use_dict[0] in all_audio_input_list:
-                                all_audio_input_list.remove(use_dict[0])
-                            all_audio_text.append(
-                                gr.update(
-                                    visible=True,
-                                    value=use_dict[1],
-                                )
-                            )
-                            all_audio_language.append(
-                                gr.update(
-                                    visible=True,
-                                    value=use_dict[2],
-                                )
-                            )
-                            i += 1
-
                 all_audio_emotion.append(
                     gr.update(
                         visible=True,
                     )
                 )
+                audio_path = all_audio_input_list.pop(0)  # 弹出第一个
                 all_audio_input.append(
                     gr.update(
                         visible=True,
-                        value=all_audio_input_list.pop(0),
+                        value=audio_path,
                     )
                 )
                 all_audio_text.append(
                     gr.update(
                         visible=True,
+                        value=os.path.splitext(os.path.basename(audio_path))[0],
                     )
                 )
                 all_audio_language.append(
                     gr.update(
                         visible=True,
+                        value="多语种混合",
                     )
                 )
-            else:
-                for j in [
-                    all_audio_emotion,
-                    all_audio_input,
-                    all_audio_text,
-                    all_audio_language,
-                ]:
-                    j.append(gr.update(visible=False))
+                all_audio_preview.append(
+                    gr.update(
+                        visible=True,
+                        value=audio_path,
+                    )
+                )
+                continue
+            for j in [
+                all_audio_emotion,
+                all_audio_input,
+                all_audio_text,
+                all_audio_language,
+                all_audio_preview,
+            ]:
+                j.append(gr.update(visible=False))
         return (
             [all_GSV_model]
             + [all_SoVITS_model]
@@ -254,4 +270,53 @@ class GSVUtils(GSV_setting.GSVSetting):
             + all_audio_input
             + all_audio_text
             + all_audio_language
+            + all_audio_preview
         )
+
+    # 保存所有模型数据
+    def save_all_GSV_model(
+        self,
+        model_name,
+        GPT_model_path,
+        SoVITS_model_path,
+        *args,
+    ):
+        if not model_name or not GPT_model_path or not SoVITS_model_path or not args:
+            return
+        # 获取 self.show_audio_num 的值
+        num = self.show_audio_num
+        # 使用 self.show_audio_num 来切割 *args 中的数据
+        all_audio_emotion = args[:num]
+        all_audio_input = args[num : num * 2]
+        all_audio_text = args[num * 2 : num * 3]
+        all_audio_language = args[num * 3 : num * 4]
+
+        if (
+            not os.path.exists(os.path.join(self.GSV_model_path, model_name))
+            or not os.path.exists(GPT_model_path)
+            or not os.path.exists(SoVITS_model_path)
+        ):
+            return
+        audio_data = {}
+
+        for emotion, audio_input, audio_text, audio_language in zip(
+            all_audio_emotion, all_audio_input, all_audio_text, all_audio_language
+        ):
+            if not emotion:
+                continue
+            if os.path.exists(audio_input):
+                if not audio_text:
+                    audio_text = os.splitext(os.path.basename(audio_input))[0]
+                if not audio_language:
+                    audio_language = "多语种混合"
+                a = 1
+                while emotion in audio_data:
+                    emotion = emotion + str(a)
+                    a += 1
+                audio_data[emotion] = [audio_input, audio_text, audio_language]
+        if self.save_model_data(
+            model_name, GPT_model_path, SoVITS_model_path, audio_data
+        ):
+            gr.Info(f"模型:“ {model_name} ”保存成功！")
+        else:
+            gr.Warning(f"模型:“ {model_name} ”保存失败！")

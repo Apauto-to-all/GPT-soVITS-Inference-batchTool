@@ -161,33 +161,43 @@ class GSVPage(GSV_utils.GSVUtils):
     def showGSVmodelManagePage(self, demo: gr.Blocks):
         with gr.Tab(label="GPT-soVITS训练的模型管理界面"):
             gr.Markdown(
-                "### 模型管理，在model文件夹下，创建一个文件夹（文件名就是你模型的文件名），里面放训练好的SoVITS模型和GPT模型，然后放一些参考音频文件，完成后回到该页面，点击“重新加载模型”按钮"
+                "### 模型管理，在model文件夹下，创建一个文件夹（文件名就是你模型的文件名），里面放训练好的SoVITS模型和GPT模型，然后放一些参考音频文件，完成后回到该页面，点击“重新加载模型”按钮。"
+            )
+            gr.Markdown(
+                "### 参考音频已自动分配完成，在需要使用的参考音频前，请输入情感，参考文字，参考语言。在所有步骤完成后，点击“保存模型”按钮。"
             )
             with gr.Row():
-                # 加载model文件夹下的所有模型
-                all_model_input = gr.Dropdown(
-                    label="模型选择",
-                    interactive=True,
-                )
-                # 加载模型按钮
-                button_select_model = gr.Button(
-                    value="重新加载模型",
+                with gr.Column():
+                    # 加载model文件夹下的所有模型
+                    all_model_input = gr.Dropdown(
+                        label="模型选择",
+                        interactive=True,
+                    )
+                    # 加载模型按钮
+                    button_select_model = gr.Button(
+                        value="重新加载模型",
+                        variant="primary",
+                        size="sm",
+                    )
+                    button_select_model.click(
+                        self.reload_gr_GSV_model,
+                        outputs=all_model_input,
+                    )
+                with gr.Column():
+                    # 加载模型文件夹下的GPT模型
+                    all_GSV_model = gr.Dropdown(
+                        label="GPT模型选择",
+                        interactive=True,
+                    )
+                    # 加载模型文件夹下的SoVITS模型
+                    all_SoVITS_model = gr.Dropdown(
+                        label="SoVITS模型选择",
+                        interactive=True,
+                    )
+                button_save_all = gr.Button(
+                    value="保存模型",
                     variant="primary",
                     size="sm",
-                )
-                button_select_model.click(
-                    self.reload_gr_GSV_model,
-                    outputs=all_model_input,
-                )
-                # 加载模型文件夹下的GPT模型
-                all_GSV_model = gr.Dropdown(
-                    label="GPT模型选择",
-                    interactive=True,
-                )
-                # 加载模型文件夹下的SoVITS模型
-                all_SoVITS_model = gr.Dropdown(
-                    label="SoVITS模型选择",
-                    interactive=True,
                 )
             # 所有参考音频情感
             all_audio_emotion = []
@@ -197,6 +207,8 @@ class GSVPage(GSV_utils.GSVUtils):
             all_audio_text = []
             # 参考音频语言
             all_audio_language = []
+            # 预览参考音频
+            all_audio_preview = []
             # 布局参考音频
             for i in range(self.show_audio_num):
                 with gr.Column():
@@ -207,42 +219,55 @@ class GSVPage(GSV_utils.GSVUtils):
                                 placeholder="输入该参考音频情感",
                                 interactive=True,
                                 visible=False,
+                                scale=1,
                             )
                         )
-                        all_audio_input.append(
+                        with gr.Column(scale=4):
+                            with gr.Row():
+                                all_audio_input.append(
+                                    gr.Textbox(
+                                        label=f"参考音频{i+1}",
+                                        visible=False,
+                                        interactive=False,
+                                        scale=3,
+                                    )
+                                )
+                                all_audio_language.append(
+                                    gr.Dropdown(
+                                        label=f"参考音频语言{i+1}",
+                                        choices=[
+                                            "中文",
+                                            "粤语",
+                                            "英文",
+                                            "日文",
+                                            "韩文",
+                                            "中英混合",
+                                            "粤英混合",
+                                            "日英混合",
+                                            "韩英混合",
+                                            "多语种混合",
+                                            "多语种混合(粤语)",
+                                        ],
+                                        interactive=True,
+                                        visible=False,
+                                        scale=1,
+                                    )
+                                )
+                            all_audio_text.append(
+                                gr.Textbox(
+                                    label=f"参考音频文字{i+1}",
+                                    placeholder="输入该参考音频文字",
+                                    interactive=True,
+                                    visible=False,
+                                )
+                            )
+                        all_audio_preview.append(
                             gr.Audio(
-                                label=f"参考音频{i+1}",
-                                interactive=False,
+                                label=f"参考音频{i+1}预览",
                                 type="filepath",
+                                interactive=False,
                                 visible=False,
-                            )
-                        )
-                        all_audio_text.append(
-                            gr.Textbox(
-                                label=f"参考音频文字{i+1}",
-                                placeholder="输入该参考音频文字",
-                                interactive=True,
-                                visible=False,
-                            )
-                        )
-                        all_audio_language.append(
-                            gr.Dropdown(
-                                label=f"参考音频语言{i+1}",
-                                choices=[
-                                    "中文",
-                                    "粤语",
-                                    "英文",
-                                    "日文",
-                                    "韩文",
-                                    "中英混合",
-                                    "粤英混合",
-                                    "日英混合",
-                                    "韩英混合",
-                                    "多语种混合",
-                                    "多语种混合(粤语)",
-                                ],
-                                interactive=True,
-                                visible=False,
+                                scale=1,
                             )
                         )
 
@@ -250,6 +275,20 @@ class GSVPage(GSV_utils.GSVUtils):
                 self.reload_GSV_model_audio,
                 inputs=all_model_input,
                 outputs=[
+                    all_GSV_model,
+                    all_SoVITS_model,
+                ]
+                + all_audio_emotion
+                + all_audio_input
+                + all_audio_text
+                + all_audio_language
+                + all_audio_preview,
+            )
+
+            button_save_all.click(
+                self.save_all_GSV_model,
+                inputs=[
+                    all_model_input,
                     all_GSV_model,
                     all_SoVITS_model,
                 ]

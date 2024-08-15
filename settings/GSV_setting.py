@@ -108,7 +108,7 @@ class GSVSetting:
             config.config_settings_folder, "GSV_model_data_config.json"
         )
         # 显示音频数量
-        self.show_audio_num = 30
+        self.show_audio_num = 10
 
     # 检测GPT-soVITS的文件夹
     def check_GSV_path(self, GSV_folder_path) -> bool:
@@ -288,8 +288,9 @@ class GSVSetting:
                 if audio_data:
                     for _, v in audio_data.items():
                         if len(v) == 3:
-                            if os.path.exists(v[0]):
-                                return True
+                            if not os.path.exists(v[0]):
+                                return False
+                    return True
         return False
 
     # 保存模型的所有数据

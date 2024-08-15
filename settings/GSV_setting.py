@@ -368,11 +368,11 @@ class GSVSetting:
     def get_last_use_model(self) -> str:
         all_model_list = self.get_all_use_GSV_model_data()
         data = rs.read_json(self.last_use_model)
-        return (
-            data
-            if data and data in all_model_list
-            else all_model_list[0] if all_model_list else None
-        )
+        if data and data in all_model_list:
+            return data
+        if all_model_list:
+            self.save_last_model(all_model_list[0])
+            return all_model_list[0]
 
     # 保存上一次使用的模型
     def save_last_model(self, model_name):

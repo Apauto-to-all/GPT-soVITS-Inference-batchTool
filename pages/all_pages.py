@@ -32,10 +32,12 @@ class AllPages:
             # 1个项目管理页面
             self.proj_page.showProjMgmt(demo)
             with gr.Tab(label="设置"):
-                with gr.Tab(label="GPT-soVITS-Inference设置"):
+                with gr.Tab(label="程序设置"):
                     self.setting_page.showSettingPage(demo)
                 with gr.Tab(label="GPT-soVITS设置"):
                     self.GSV_page.showGSVSettingPage(demo)
+                with gr.Tab(label="GPT-soVITS-Inference设置"):
+                    self.setting_page.showGSVInferenceSettingPage(demo)
             return demo
 
     def appRun(self):

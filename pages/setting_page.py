@@ -85,44 +85,6 @@ class SettingPage(LinkPages):
             gr.Markdown(
                 f"### 如果你有经验，请去：{self.main_data_utils.main_setting.main_data_path} 中修改。"
             )
-            # api设置
-            with gr.Row():
-                api_host_input = gr.Textbox(
-                    label="API的host",
-                    info="api_host",
-                    value=data.get(
-                        "api_host", self.main_data_utils.main_setting.api_host
-                    ),
-                    interactive=False,
-                )
-                api_port_input = gr.Textbox(
-                    label="API的端口",
-                    info="api_port",
-                    value=data.get(
-                        "api_port", self.main_data_utils.main_setting.api_port
-                    ),
-                    interactive=False,
-                )
-            # api url 设置
-            with gr.Row():
-                api_url_character_list_input = gr.Textbox(
-                    label="API的角色列表URL",
-                    info="api_url_character_list",
-                    value=data.get(
-                        "api_url_character_list",
-                        self.main_data_utils.main_setting.api_url_character_list,
-                    ),
-                    interactive=False,
-                )
-                api_url_txt_to_wav_input = gr.Textbox(
-                    label="API的文本转语音URL",
-                    info="api_url_txt_to_wav",
-                    value=data.get(
-                        "api_url_txt_to_wav",
-                        self.main_data_utils.main_setting.api_url_txt_to_wav,
-                    ),
-                    interactive=False,
-                )
             # app设置
             with gr.Row():
                 app_local_host_input = gr.Textbox(
@@ -169,3 +131,54 @@ class SettingPage(LinkPages):
             "auto_open_browser": True if auto_open_browser_input else False,
         }
         self.main_data_utils.main_setting.update_data(wait_save_data)
+
+    def showGSVInferenceSettingPage(self, demo: gr.Blocks):
+        # 显示设置
+        if not os.path.exists(self.main_data_utils.main_setting.main_data_path):
+            gr.Markdown(
+                "### 未找到设置文件，请重启程序。（重启程序会自动创建设置文件）"
+            )
+            return
+        with open(
+            self.main_data_utils.main_setting.main_data_path, "r", encoding="utf-8"
+        ) as f:
+            data = json.load(f)
+        # 显示提示信息
+        gr.Markdown("### 注意：下面这些设置会影响到程序的运行，我将其禁用了。")
+        gr.Markdown(
+            f"### 如果你有经验，请去：{self.main_data_utils.main_setting.main_data_path} 中修改。"
+        )
+        # api设置
+        with gr.Row():
+            api_host_input = gr.Textbox(
+                label="API的host",
+                info="api_host",
+                value=data.get("api_host", self.main_data_utils.main_setting.api_host),
+                interactive=False,
+            )
+            api_port_input = gr.Textbox(
+                label="API的端口",
+                info="api_port",
+                value=data.get("api_port", self.main_data_utils.main_setting.api_port),
+                interactive=False,
+            )
+        # api url 设置
+        with gr.Row():
+            api_url_character_list_input = gr.Textbox(
+                label="API的角色列表URL",
+                info="api_url_character_list",
+                value=data.get(
+                    "api_url_character_list",
+                    self.main_data_utils.main_setting.api_url_character_list,
+                ),
+                interactive=False,
+            )
+            api_url_txt_to_wav_input = gr.Textbox(
+                label="API的文本转语音URL",
+                info="api_url_txt_to_wav",
+                value=data.get(
+                    "api_url_txt_to_wav",
+                    self.main_data_utils.main_setting.api_url_txt_to_wav,
+                ),
+                interactive=False,
+            )

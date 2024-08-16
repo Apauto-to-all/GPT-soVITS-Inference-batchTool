@@ -1,3 +1,4 @@
+import shutil
 import sys
 import os
 
@@ -333,6 +334,7 @@ class GSVPage(GSV_utils.GSVUtils):
                 interactive=True,
                 info="语速，默认1.0",
             )
+            # top_k 设置，功能：top_k在推理的时候要挑出一个最好的token，但机器并不知道哪个是最好的。于是先按照top_k挑出前几个token
             with gr.Row():
                 # 选择top_k
                 top_k_input = gr.Slider(
@@ -477,6 +479,8 @@ class GSVPage(GSV_utils.GSVUtils):
                         temperature_input,
                     ],
                 )
+
+            # 所有推理参数
             all_input = [
                 emotions_input,
                 speed_input,
@@ -503,3 +507,106 @@ class GSVPage(GSV_utils.GSVUtils):
                 inputs=model_name_input,
                 outputs=all_input,
             )
+
+        with gr.Tab(label="GPT-soVITS抽卡"):
+            txt_input = gr.Textbox(label="输入文本（text）", lines=5)
+            with gr.Row():
+                # 输出语言设置，下拉框
+                text_language = gr.Dropdown(
+                    label="选择推理文本语言（text_language）",
+                    choices=[
+                        "中文",
+                        "粤语",
+                        "英文",
+                        "日文",
+                        "韩文",
+                        "中英混合",
+                        "粤英混合",
+                        "日英混合",
+                        "韩英混合",
+                        "多语种混合",
+                        "多语种混合(粤语)",
+                    ],
+                    value="多语种混合",
+                    interactive=True,
+                    info="输入文本的语言，默认多语种混合",
+                )
+
+                # 按什么切分文本，下拉框
+                cut_method_input = gr.Dropdown(
+                    label="切分方法（cut_punc）",
+                    choices=[
+                        "不切",
+                        "凑四句一切",
+                        "凑50字一切",
+                        "按中文句号。切",
+                        "按英文句号.切",
+                        "按标点符号切",
+                    ],
+                    value="凑四句一切",
+                    interactive=True,
+                    info='文本切分符号设定, 默认为空, 以",.，。"字符串的方式传入',
+                )
+
+            # 连抽次数设置，抽卡按钮，停止按钮
+            with gr.Row():
+                illation_num_input = gr.Slider(
+                    label="连抽次数",
+                    minimum=1,
+                    maximum=20,
+                    step=1,
+                )
+                btn_generate = gr.Button("点击抽卡", variant="primary", size="lg")
+                btn_stop = gr.Button("停停停！", variant="stop", size="lg")
+
+            TTS_input = [
+                txt_input,
+                text_language,
+                cut_method_input,
+                illation_num_input,
+            ]
+
+            demo.load(
+                self.reload_gr_GSV_inference_text,
+                outputs=TTS_input,
+            )
+            for i in TTS_input:
+                i.change(
+                    self.save_last_save_text,
+                    inputs=TTS_input,
+                )
+
+            # 输出音频组件
+            output_audios = []  # 展示音频
+            output_dudio_check = []  # 是否保存到项目
+            # 按每行4个音频组件进行分组，并为每组创建一个Row
+            for i in range(0, 20, 4):  # 从0开始，到20结束，步长为4
+                with gr.Row():
+                    for j in range(4):  # 每行4个音频组件
+                        with gr.Column():
+                            with gr.Row():
+                                output_audios.append(
+                                    gr.Audio(
+                                        label=f"生成的音频{j+i+1}",
+                                        type="filepath",
+                                        visible=False if (i + j) != 0 else True,
+                                        min_width=300,
+                                        interactive=False,
+                                    )
+                                )
+                                output_dudio_check.append(
+                                    gr.Checkbox(
+                                        label="",
+                                        value=False,
+                                        # container=False,  # 不显示外框
+                                        # render=False,
+                                        visible=False if (i + j) != 0 else True,
+                                        min_width=1,
+                                    )
+                                )
+
+            for i in range(20):
+                output_dudio_check[i].change(
+                    self.save_wav_file_to_project,
+                    inputs=[output_dudio_check[i], output_audios[i]],
+                )

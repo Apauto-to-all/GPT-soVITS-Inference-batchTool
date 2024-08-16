@@ -1,4 +1,5 @@
 import random
+import shutil
 import sys
 import os
 
@@ -461,3 +462,36 @@ class GSVUtils(GSV_setting.GSVSetting):
             }
             results.append(result)
         return results
+
+    # 保存推理结果
+    def save_wav_file_to_project(self, output_dudio_check, audio_file_path):
+        if not audio_file_path:
+            if output_dudio_check:
+                gr.Warning("未生成音频文件，请检查！")
+            return
+        project_folder_path = self.get_sub_project_path_from_last()
+        if not project_folder_path:
+            gr.Warning("未选择子项目，请检查")
+            return
+        # 将音频文件移动到项目文件夹
+        if not os.path.exists(project_folder_path):
+            os.makedirs(project_folder_path, exist_ok=True)
+        # 获取源文件的文件名
+        file_name = os.path.basename(audio_file_path)
+        if output_dudio_check:  # 如果勾选
+            # copy2可以复制文件的元数据
+            shutil.copy2(audio_file_path, project_folder_path)
+        else:  # 如果取消勾选，就删除目标文件
+            # 定义目标文件路径
+            target_path = os.path.join(project_folder_path, file_name)
+            if os.path.exists(target_path):
+                os.remove(target_path)
+
+    # 加载默认推理文本以及次数
+    def reload_gr_GSV_inference_text(self):
+        get_last_save_text = self.get_last_save_text()
+        txt_input = gr.update(value=get_last_save_text["txt_input"])
+        text_language = gr.update(value=get_last_save_text["text_language"])
+        cut_method_input = gr.update(value=get_last_save_text["cut_method_input"])
+        illation_num_input = gr.update(value=get_last_save_text["illation_num_input"])
+        return (txt_input, text_language, cut_method_input, illation_num_input)

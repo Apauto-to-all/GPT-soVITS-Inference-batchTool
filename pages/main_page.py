@@ -493,12 +493,12 @@ class MainPage(LinkPages):
                             ],
                         )
 
-        with gr.Tab(label="开始抽卡"):
+        with gr.Tab(label="GPT-soVITS-Inference抽卡"):
             txt_input = gr.Textbox(label="输入文本", lines=5)
             with gr.Row():
                 # 输出语言设置，下拉框
                 text_language = gr.Dropdown(
-                    label="选择输出语言（text_language）",
+                    label="选择推理文本语言（text_language）",
                     choices=[
                         "中文",
                         "英文",

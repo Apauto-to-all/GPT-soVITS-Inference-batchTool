@@ -7,6 +7,9 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import config  # 导入文件名目录
 
 from read_and_save import ReadAndSave
+from proj_setting import ProjectSetting
+
+project_setting = ProjectSetting()
 
 # 一个读取和保存数据的类
 rs = ReadAndSave()
@@ -130,6 +133,8 @@ class GSVSetting:
         self.last_use_model = os.path.join(
             config.config_last_data_GSV, "last_model.txt"
         )
+        # 上一次使用的推理文本，和推理次数
+        self.last_use_text = os.path.join(config.config_last_data_GSV, "last_text.json")
         # 显示音频数量
         self.show_audio_num = 10
 
@@ -419,3 +424,32 @@ class GSVSetting:
         data = self.get_default_GSV_inference_setting(modle_name)
         self.save_GSV_inference_setting(modle_name, data)
         return data
+
+    # 获取当前子路径
+    def get_sub_project_path_from_last(self):
+        return project_setting.get_sub_project_path_from_last()
+
+    # 获取保存文件夹路径
+    def get_last_save_text(self):
+        data = rs.read_json(self.last_use_text, {})
+        data["txt_input"] = data.get("txt_input", "你好啊，我是你的智能语音助手")
+        data["text_language"] = data.get("text_language", "多语种混合")
+        data["cut_method_input"] = data.get("cut_method_input", "凑四句一切")
+        data["illation_num_input"] = data.get("illation_num_input", 5)
+        return data
+
+    # 保存推理文本
+    def save_last_save_text(
+        self,
+        txt_input,
+        text_language,
+        cut_method_input,
+        illation_num_input,
+    ):
+        data = {
+            "txt_input": txt_input,
+            "text_language": text_language,
+            "cut_method_input": cut_method_input,
+            "illation_num_input": illation_num_input,
+        }
+        rs.save_json(self.last_use_text, data)

@@ -14,7 +14,7 @@ class ReadAndSave:
         return False
 
     # 读取json文件
-    def read_json(self, file_path, default_type={}):
+    def read_json(self, file_path, default_type):
         """
         读取json文件
         :param file_path: 文件路径

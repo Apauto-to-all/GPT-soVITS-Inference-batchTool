@@ -212,14 +212,14 @@ class GSVSetting:
 
     # 获取GSV的python嵌入式环境版本
     def get_GSV_python_embedded_version(self) -> str:
-        data = rs.read_json(self.GSV_python_embedded_path)
+        data = rs.read_json(self.GSV_python_embedded_path, [])
         if data and len(data) == 2:
             return data[1]
         return None
 
     # 获取GSV的python嵌入式环境python路径
     def get_GSV_python_embedded_python(self) -> str:
-        data = rs.read_json(self.GSV_python_embedded_path)
+        data = rs.read_json(self.GSV_python_embedded_path, [])
         if data and len(data) == 2:
             python_embedded_path = os.path.join(data[0], "python")
             return python_embedded_path
@@ -227,7 +227,7 @@ class GSVSetting:
 
     # 获取GSV的python嵌入式环境路径
     def get_GSV_python_embedded_path(self) -> str:
-        data = rs.read_json(self.GSV_python_embedded_path)
+        data = rs.read_json(self.GSV_python_embedded_path, [])
         if data and len(data) == 2:
             return data[0]
         return None
@@ -285,13 +285,13 @@ class GSVSetting:
 
     # 获取GSV的API配置文件
     def get_GSV_api_config(self) -> dict:
-        data = rs.read_json(self.GSV_api_config_path)
+        data = rs.read_json(self.GSV_api_config_path, {})
         if data:
             return data
         GSV_path = rs.read_txt(self.GSV_path)
         if GSV_path:
             self.save_api_default_setting()
-            return rs.read_json(self.GSV_api_config_path)
+            return rs.read_json(self.GSV_api_config_path, {})
         return {}
 
     # 检测模型所有数据是否正确
@@ -338,7 +338,7 @@ class GSVSetting:
             "audio_data": audio_data,
         }
         # 读取原有数据
-        all_data = rs.read_json(self.GSV_model_data_config_path)
+        all_data = rs.read_json(self.GSV_model_data_config_path, {})
         if not all_data:
             all_data = {}
         all_data[model_name] = model_data
@@ -347,18 +347,18 @@ class GSVSetting:
 
     # 读取已经保存的模型的所有数据
     def get_GSV_model_data(self, model_name):
-        all_model_data = rs.read_json(self.GSV_model_data_config_path)
+        all_model_data = rs.read_json(self.GSV_model_data_config_path, {})
         if all_model_data:
             return all_model_data.get(model_name, {})
 
-    # 获取所有使用的模型
+    # 获取所有正在使用的模型
     def get_all_use_GSV_model_data(self) -> list:
-        all_model = rs.read_json(self.GSV_model_data_config_path)
+        all_model = rs.read_json(self.GSV_model_data_config_path, [])
         return list(all_model.keys()) if all_model else []
 
     # 获取所有情感
     def get_all_emotion(self, model_name) -> list:
-        all_model_data = rs.read_json(self.GSV_model_data_config_path)
+        all_model_data = rs.read_json(self.GSV_model_data_config_path, [])
         if all_model_data:
             model_data = all_model_data.get(model_name, {})
             return list(model_data.get("audio_data", {}).keys())
@@ -367,7 +367,7 @@ class GSVSetting:
     # 获取上一次的模型
     def get_last_use_model(self) -> str:
         all_model_list = self.get_all_use_GSV_model_data()
-        data = rs.read_json(self.last_use_model)
+        data = rs.read_json(self.last_use_model, [])
         if data and data in all_model_list:
             return data
         if all_model_list:
@@ -379,3 +379,43 @@ class GSVSetting:
         all_model_list = self.get_all_use_GSV_model_data()
         if model_name in all_model_list:
             rs.save_txt(self.last_use_model, model_name)
+
+    # 保持模型的推理参数
+    def save_GSV_inference_setting(self, model_name: str, data: dict):
+        """
+        保持模型的推理参数
+        :param model_name: 模型名称
+        :param data: 推理参数
+        :return: 是否保存成功
+        """
+        all_model_data = self.get_all_use_GSV_model_data()
+        if all_model_data and model_name in all_model_data:
+            rs.save_json(
+                os.path.join(
+                    config.config_all_model_last_data_GSV, f"{model_name}.json"
+                ),
+                data,
+            )
+
+    # 默认的推理参数
+    def get_default_GSV_inference_setting(self, modle_name):
+        data = {
+            "model_name": modle_name,
+            "emotions": [],
+            "speed": 1.0,
+            "top_k": [False, 15, 5, 20],
+            "top_p": [False, 0.8, 0.7, 0.9],
+            "temperature": [False, 0.8, 0.7, 0.9],
+        }
+        return data
+
+    # 获取模型的推理参数
+    def get_GSV_inference_setting(self, modle_name):
+        modle_inference_setting_path = os.path.join(
+            config.config_all_model_last_data_GSV, f"{modle_name}.json"
+        )
+        if os.path.exists(modle_inference_setting_path):
+            return rs.read_json(modle_inference_setting_path, {})
+        data = self.get_default_GSV_inference_setting(modle_name)
+        self.save_GSV_inference_setting(modle_name, data)
+        return data

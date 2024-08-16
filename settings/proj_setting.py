@@ -37,7 +37,7 @@ class ProjectSetting:
         """
         获取项目数据，完整数据，包括项目集合和子项目
         """
-        data = rs.read_json(self.project_data_path)
+        data = rs.read_json(self.project_data_path, {})
         return data if data else {}
 
     # 获取所有项目集合名称
@@ -132,7 +132,7 @@ class ProjectSetting:
 
     # 读取上次使用的项目，并检测是否可用
     def get_last_project(self):
-        data = rs.read_json(self.last_project_path)  # {'项目集合': '子项目'}
+        data = rs.read_json(self.last_project_path, {})  # {'项目集合': '子项目'}
         last_project_collection = list(data.keys())[0] if data else None  # 项目集合
         last_sub_project = (
             data.get(last_project_collection, None) if data else None

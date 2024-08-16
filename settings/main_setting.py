@@ -66,10 +66,10 @@ class MainSetting:
 
     def read_main_data(self):
         # 读取主要数据
-        json_data = rs.read_json(self.main_data_path)
+        json_data = rs.read_json(self.main_data_path, {})
         if not json_data:
             self.recover_to_default()
-            json_data = rs.read_json(self.main_data_path)
+            json_data = rs.read_json(self.main_data_path, {})
         return json_data
 
     def set_api_data(self, json_data):

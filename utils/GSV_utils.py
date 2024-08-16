@@ -1,3 +1,4 @@
+import random
 import sys
 import os
 
@@ -335,3 +336,128 @@ class GSVUtils(GSV_setting.GSVSetting):
             choices=self.get_all_use_GSV_model_data(),
             value=last_model,
         )
+
+    # 更新随机设置
+    def update_random(self, is_random):
+        if is_random:
+            show = gr.update(interactive=True, visible=True)
+        else:
+            show = gr.update(interactive=True, visible=False)
+        return (
+            show,
+            show,
+            gr.update(interactive=False) if is_random else gr.update(interactive=True),
+        )
+
+    # 保存模型推理参数的数据
+    def save_gr_GSV_inference_setting(
+        self,
+        model_name_input,
+        emotions_input,
+        speed_input,
+        top_k_input,
+        top_k_random,
+        top_k_min,
+        top_k_max,
+        top_p_input,
+        top_p_random,
+        top_p_min,
+        top_p_max,
+        temperature_input,
+        temperature_random,
+        temperature_min,
+        temperature_max,
+    ):
+        if not model_name_input:
+            return
+        data = {
+            "model_name": model_name_input,
+            "emotions": emotions_input,
+            "speed": speed_input,
+            "top_k": [top_k_random, top_k_input, top_k_min, top_k_max],
+            "top_p": [top_p_random, top_p_input, top_p_min, top_p_max],
+            "temperature": [
+                temperature_random,
+                temperature_input,
+                temperature_min,
+                temperature_max,
+            ],
+        }
+        self.save_GSV_inference_setting(model_name_input, data)
+
+    # 加载模型推理参数的数据
+    def reload_gr_GSV_inference_setting(self, model_name):
+        load_data = self.get_GSV_inference_setting(model_name)
+        emotions_input = gr.update(value=load_data["emotions"])
+        speed_input = gr.update(value=load_data["speed"])
+        top_k_input = gr.update(value=load_data["top_k"][1])
+        top_k_random = gr.update(value=load_data["top_k"][0])
+        top_k_min = gr.update(value=load_data["top_k"][2])
+        top_k_max = gr.update(value=load_data["top_k"][3])
+        top_p_input = gr.update(value=load_data["top_p"][1])
+        top_p_random = gr.update(value=load_data["top_p"][0])
+        top_p_min = gr.update(value=load_data["top_p"][2])
+        top_p_max = gr.update(value=load_data["top_p"][3])
+        temperature_input = gr.update(value=load_data["temperature"][1])
+        temperature_random = gr.update(value=load_data["temperature"][0])
+        temperature_min = gr.update(value=load_data["temperature"][2])
+        temperature_max = gr.update(value=load_data["temperature"][3])
+        return (
+            emotions_input,
+            speed_input,
+            top_k_input,
+            top_k_random,
+            top_k_min,
+            top_k_max,
+            top_p_input,
+            top_p_random,
+            top_p_min,
+            top_p_max,
+            temperature_input,
+            temperature_random,
+            temperature_min,
+            temperature_max,
+        )
+
+    # 随机生成推理结果
+    def random_generate(self, all_data: dict, illation_num=5) -> list:
+        def is_random_get_value(value_list: list, is_int: bool):  # 判断是否随机，返回值
+            is_random = value_list[0]  # bool, 是否随机
+            if is_random:
+                min_value = min(value_list[2], value_list[3])
+                max_value = max(value_list[2], value_list[3])
+                return (
+                    random.randint(min_value, max_value)
+                    if is_int
+                    else round(random.uniform(min_value, max_value), 2)
+                )
+            else:
+                return value_list[1]
+
+        # 生成随机推理结果
+        results = []
+        for _ in range(illation_num):  # 生成多个推理结果
+            # 确保多次推理结果，每个情感都有机会被选中
+            all_emotions = all_data.get("emotions")
+            if not all_emotions:
+                results.append({})
+                continue
+            emotion = random.choice(all_emotions)
+            top_k = is_random_get_value(all_data.get("top_k", [False, 5, 1, 10]), True)
+            top_p = is_random_get_value(
+                all_data.get("top_p", [False, 0.8, 0.7, 0.9]), False
+            )
+            temperature = is_random_get_value(
+                all_data.get("temperature", [False, 0.8, 0.7, 0.9]), False
+            )
+
+            result = {
+                # 随机生成的参数
+                "emotion": emotion,
+                "top_k": top_k,
+                "top_p": top_p,
+                "temperature": temperature,
+                "speed": all_data.get("speed", 1.0),
+            }
+            results.append(result)
+        return results

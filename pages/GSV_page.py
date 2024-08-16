@@ -4,17 +4,8 @@ import os
 # 将项目根目录添加到sys.path中
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-import json
 import gradio as gr
-from tkinter import Tk, filedialog
 from utils import GSV_utils
-
-"""
-    "top_k": 20,
-    "top_p": 0.6,
-    "temperature": 0.6,
-    "speed": 1
-"""
 
 
 class GSVPage(GSV_utils.GSVUtils):
@@ -331,3 +322,184 @@ class GSVPage(GSV_utils.GSVUtils):
                 )
             # 加载模型和上一次使用的模型
             demo.load(self.reload_gr_last_GSV_model, outputs=model_name_input)
+
+            gr.Markdown("## 推理参数设置")
+            speed_input = gr.Slider(
+                label="语速（speed）",
+                minimum=0.5,
+                maximum=2.0,
+                step=0.05,
+                value=1.0,
+                interactive=True,
+                info="语速，默认1.0",
+            )
+            with gr.Row():
+                # 选择top_k
+                top_k_input = gr.Slider(
+                    label="采样（top_k）",
+                    info="在推理的时候要挑出一个最好的token，但机器并不知道哪个是最好的。于是先按照top_k挑出前几个token",
+                    step=1,
+                    value=15,
+                    maximum=100,
+                    minimum=1,
+                    interactive=True,
+                    scale=3,
+                )
+                # 添加一个勾选框，用于设置top_k是否随机
+                top_k_random = gr.Checkbox(
+                    label="随机",
+                    value=False,
+                    interactive=True,
+                    scale=1,
+                )
+                # 设置top_k随机的范围，2个数值输入框
+                top_k_min = gr.Number(
+                    label="范围最小值",
+                    minimum=1,
+                    maximum=100,
+                    value=5,
+                    step=1,
+                    interactive=False,
+                    visible=False,
+                    scale=1,
+                )
+                top_k_max = gr.Number(
+                    label="范围最大值",
+                    minimum=1,
+                    maximum=100,
+                    value=20,
+                    step=1,  # 步长
+                    interactive=False,
+                    visible=False,
+                    scale=1,
+                )
+                # 如果勾选了随机，上面的数字输入框就可见，且可输入
+                top_k_random.change(
+                    self.update_random,
+                    inputs=[top_k_random],
+                    outputs=[top_k_min, top_k_max, top_k_input],
+                )
+            # top_p 设置，功能：top_p在top_k的基础上筛选token
+            with gr.Row():
+                top_p_input = gr.Slider(
+                    label="采样（top_p）",
+                    minimum=0,
+                    maximum=2.0,
+                    step=0.05,
+                    value=0.8,
+                    interactive=True,
+                    info="top_p在top_k的基础上筛选token",
+                    scale=3,
+                )
+                # 添加一个勾选框，用于设置top_p是否随机
+                top_p_random = gr.Checkbox(
+                    label="随机",
+                    value=False,
+                    interactive=True,
+                    scale=1,
+                )
+                # 设置top_p随机的范围，2个数值输入框
+                top_p_min = gr.Number(
+                    label="范围最小值",
+                    minimum=0,
+                    maximum=2.0,
+                    value=0.7,
+                    step=0.05,  # 步长
+                    interactive=False,
+                    visible=False,
+                    scale=1,
+                )
+                top_p_max = gr.Number(
+                    label="范围最大值",
+                    minimum=0,
+                    maximum=2.0,
+                    value=0.9,
+                    step=0.05,  # 步长
+                    interactive=False,
+                    visible=False,
+                    scale=1,
+                )
+                # 如果勾选了随机，上面的数字输入框就可见，且可输入
+                top_p_random.change(
+                    self.update_random,
+                    inputs=[top_p_random],
+                    outputs=[top_p_min, top_p_max, top_p_input],
+                )
+
+            # temperature 设置，功能：temperature控制随机性输出。
+            with gr.Row():
+                temperature_input = gr.Slider(
+                    label="采样温度（temperature）",
+                    minimum=0,
+                    maximum=2.0,
+                    step=0.05,
+                    value=0.8,
+                    interactive=True,
+                    info="temperature控制随机性输出",
+                    scale=3,
+                )
+                # 添加一个勾选框，用于设置temperature是否随机
+                temperature_random = gr.Checkbox(
+                    label="随机",
+                    value=False,
+                    interactive=True,
+                    scale=1,
+                )
+                # 设置temperature随机的范围，2个数值输入框
+                temperature_min = gr.Number(
+                    label="范围最小值",
+                    minimum=0,
+                    maximum=2.0,
+                    value=0.7,
+                    step=0.05,  # 步长
+                    interactive=False,
+                    visible=False,
+                    scale=1,
+                )
+                temperature_max = gr.Number(
+                    label="范围最大值",
+                    minimum=0,
+                    maximum=2.0,
+                    value=0.9,
+                    step=0.05,  # 步长
+                    interactive=False,
+                    visible=False,
+                    scale=1,
+                )
+
+                # temperature_random勾选框更新
+                temperature_random.change(
+                    self.update_random,
+                    inputs=[temperature_random],
+                    outputs=[
+                        temperature_min,
+                        temperature_max,
+                        temperature_input,
+                    ],
+                )
+            all_input = [
+                emotions_input,
+                speed_input,
+                top_k_input,
+                top_k_random,
+                top_k_min,
+                top_k_max,
+                top_p_input,
+                top_p_random,
+                top_p_min,
+                top_p_max,
+                temperature_input,
+                temperature_random,
+                temperature_min,
+                temperature_max,
+            ]
+            for i in all_input:
+                i.change(
+                    self.save_gr_GSV_inference_setting,
+                    inputs=[model_name_input] + all_input,
+                )
+            model_name_input.change(
+                self.reload_gr_GSV_inference_setting,
+                inputs=model_name_input,
+                outputs=all_input,
+            )

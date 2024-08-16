@@ -545,7 +545,7 @@ class GSVPage(GSV_utils.GSVUtils):
                     ],
                     value="凑四句一切",
                     interactive=True,
-                    info='文本切分符号设定, 默认为空, 以",.，。"字符串的方式传入',
+                    info="文本切分方式",
                 )
 
             # 连抽次数设置，抽卡按钮，停止按钮

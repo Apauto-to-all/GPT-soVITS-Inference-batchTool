@@ -434,8 +434,37 @@ class GSVSetting:
         data = rs.read_json(self.last_use_text, {})
         data["txt_input"] = data.get("txt_input", "你好啊，我是你的智能语音助手")
         data["text_language"] = data.get("text_language", "多语种混合")
+        if data["text_language"] not in [
+            "中文",
+            "粤语",
+            "英文",
+            "日文",
+            "韩文",
+            "中英混合",
+            "粤英混合",
+            "日英混合",
+            "韩英混合",
+            "多语种混合",
+            "多语种混合(粤语)",
+        ]:
+            data["text_language"] = "多语种混合"
         data["cut_method_input"] = data.get("cut_method_input", "凑四句一切")
+        if data["cut_method_input"] not in [
+            "不切",
+            "凑四句一切",
+            "凑50字一切",
+            "按中文句号。切",
+            "按英文句号.切",
+            "按标点符号切",
+        ]:
+            data["cut_method_input"] = "凑四句一切"
         data["illation_num_input"] = data.get("illation_num_input", 5)
+        if (
+            not isinstance(data["illation_num_input"], int)
+            or data["illation_num_input"] < 1
+            or data["illation_num_input"] > 20,
+        ):
+            data["illation_num_input"] = 5
         return data
 
     # 保存推理文本

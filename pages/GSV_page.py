@@ -12,6 +12,7 @@ from utils import GSV_utils
 class GSVPage(GSV_utils.GSVUtils):
     def __init__(self):
         super().__init__()
+        self.stop_flag = False
 
     # 显示GSV的一些设置
     def showGSVSettingPage(self, demo: gr.Blocks):
@@ -321,6 +322,13 @@ class GSVPage(GSV_utils.GSVUtils):
                     inputs=model_name_input,
                     outputs=emotions_input,
                 )
+                # 启动API的按钮
+                button_start_api = gr.Button(
+                    value="启动API",
+                    variant="primary",
+                    size="sm",
+                )
+                button_start_api.click(self.start_GSV_API)
             # 加载模型和上一次使用的模型
             demo.load(self.reload_gr_last_GSV_model, outputs=model_name_input)
 
@@ -558,6 +566,13 @@ class GSVPage(GSV_utils.GSVUtils):
                 )
                 btn_generate = gr.Button("点击抽卡", variant="primary", size="lg")
                 btn_stop = gr.Button("停停停！", variant="stop", size="lg")
+                # 点击按钮后，调用stop_generation函数，停止生成音频
+
+            def stop_generation():
+                self.stop_flag = True
+
+            # 绑定按钮的click事件
+            btn_stop.click(stop_generation)
 
             TTS_input = [
                 txt_input,
@@ -610,3 +625,37 @@ class GSVPage(GSV_utils.GSVUtils):
                     self.save_wav_file_to_project,
                     inputs=[output_dudio_check[i], output_audios[i]],
                 )
+
+            # 点击按钮后，调用update_audios函数，传入输入组件和输出组件
+            async def update_audios(model_name):
+                self.stop_flag = False
+                # 初始化输出结果
+                results_audio = [
+                    gr.update(visible=True if _ == 0 else False, value=None)
+                    for _ in range(20)
+                ]
+                results_check = [
+                    gr.update(visible=True if _ == 0 else False, value=False)
+                    for _ in range(20)
+                ]
+                yield results_audio + results_check
+                i = 0
+                async for wav_file_path in self.interface(model_name):
+                    if self.stop_flag:
+                        break
+                    if not wav_file_path:
+                        break
+                    if i < 20:
+                        results_audio[i] = gr.update(value=wav_file_path, visible=True)
+                        results_check[i] = gr.update(visible=True)
+                        yield results_audio + results_check
+                    else:
+                        break
+                    i += 1
+
+            # 绑定抽卡按钮的click事件
+            btn_generate.click(
+                update_audios,
+                inputs=[model_name_input],
+                outputs=output_audios + output_dudio_check,
+            )

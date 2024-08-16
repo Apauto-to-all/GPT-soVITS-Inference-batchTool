@@ -1,6 +1,8 @@
 # 适配GSV的api
 import os
+import re
 import sys
+import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -8,88 +10,15 @@ import config  # 导入文件名目录
 
 from read_and_save import ReadAndSave
 from proj_setting import ProjectSetting
+from main_setting import MainSetting
+
+main_setting = MainSetting()
 
 project_setting = ProjectSetting()
 
 # 一个读取和保存数据的类
 rs = ReadAndSave()
 
-"""
-## 执行参数:
-
-`-s` - `SoVITS模型路径, 可在 config.py 中指定`
-`-g` - `GPT模型路径, 可在 config.py 中指定`
-
-调用请求缺少参考音频时使用
-`-dr` - `默认参考音频路径`
-`-dt` - `默认参考音频文本`
-`-dl` - `默认参考音频语种, "中文","英文","日文","韩文","粤语,"zh","en","ja","ko","yue"`
-
-`-d` - `推理设备, "cuda","cpu"`
-`-a` - `绑定地址, 默认"127.0.0.1"`
-`-p` - `绑定端口, 默认9880, 可在 config.py 中指定`
-`-fp` - `覆盖 config.py 使用全精度`
-`-hp` - `覆盖 config.py 使用半精度`
-`-sm` - `流式返回模式, 默认不启用, "close","c", "normal","n", "keepalive","k"`
-·-mt` - `返回的音频编码格式, 流式默认ogg, 非流式默认wav, "wav", "ogg", "aac"`
-·-cp` - `文本切分符号设定, 默认为空, 以",.，。"字符串的方式传入`
-
-`-hb` - `cnhubert路径`
-`-b` - `bert路径`
-dict_language = {
-    "中文": "all_zh",
-    "粤语": "all_yue",
-    "英文": "en",
-    "日文": "all_ja",
-    "韩文": "all_ko",
-    "中英混合": "zh",
-    "粤英混合": "yue",
-    "日英混合": "ja",
-    "韩英混合": "ko",
-    "多语种混合": "auto",    #多语种启动切分识别语种
-    "多语种混合(粤语)": "auto_yue",
-    "all_zh": "all_zh",
-    "all_yue": "all_yue",
-    "en": "en",
-    "all_ja": "all_ja",
-    "all_ko": "all_ko",
-    "zh": "zh",
-    "yue": "yue",
-    "ja": "ja",
-    "ko": "ko",
-    "auto": "auto",
-    "auto_yue": "auto_yue",
-}
-
-# logger
-logging.config.dictConfig(uvicorn.config.LOGGING_CONFIG)
-logger = logging.getLogger('uvicorn')
-
-# 获取配置
-g_config = global_config.Config()
-
-# 获取参数
-parser = argparse.ArgumentParser(description="GPT-SoVITS api")
-
-parser.add_argument("-s", "--sovits_path", type=str, default=g_config.sovits_path, help="SoVITS模型路径")
-parser.add_argument("-g", "--gpt_path", type=str, default=g_config.gpt_path, help="GPT模型路径")
-parser.add_argument("-dr", "--default_refer_path", type=str, default="", help="默认参考音频路径")
-parser.add_argument("-dt", "--default_refer_text", type=str, default="", help="默认参考音频文本")
-parser.add_argument("-dl", "--default_refer_language", type=str, default="", help="默认参考音频语种")
-parser.add_argument("-d", "--device", type=str, default=g_config.infer_device, help="cuda / cpu")
-parser.add_argument("-a", "--bind_addr", type=str, default="0.0.0.0", help="default: 0.0.0.0")
-parser.add_argument("-p", "--port", type=int, default=g_config.api_port, help="default: 9880")
-parser.add_argument("-fp", "--full_precision", action="store_true", default=False, help="覆盖config.is_half为False, 使用全精度")
-parser.add_argument("-hp", "--half_precision", action="store_true", default=False, help="覆盖config.is_half为True, 使用半精度")
-# bool值的用法为 `python ./api.py -fp ...`
-# 此时 full_precision==True, half_precision==False
-parser.add_argument("-sm", "--stream_mode", type=str, default="close", help="流式返回模式, close / normal / keepalive")
-parser.add_argument("-mt", "--media_type", type=str, default="wav", help="音频编码格式, wav / ogg / aac")
-parser.add_argument("-cp", "--cut_punc", type=str, default="", help="文本切分符号设定, 符号范围,.;?!、，。？！；：…")
-# 切割常用分句符为 `python ./api.py -cp ".?!。？！"`
-parser.add_argument("-hb", "--hubert_path", type=str, default=g_config.cnhubert_path, help="覆盖config.cnhubert_path")
-parser.add_argument("-b", "--bert_path", type=str, default=g_config.bert_path, help="覆盖config.bert_path")
-"""
 {
     "模型名称（文件夹名）": {
         "GPT_model_path": "GPT模型路径",
@@ -135,6 +64,8 @@ class GSVSetting:
         )
         # 上一次使用的推理文本，和推理次数
         self.last_use_text = os.path.join(config.config_last_data_GSV, "last_text.json")
+        # 显示默认文件夹
+        self.temp_folder = config.temp_folder
         # 显示音频数量
         self.show_audio_num = 10
 
@@ -224,9 +155,9 @@ class GSVSetting:
 
     # 获取GSV的python嵌入式环境python路径
     def get_GSV_python_embedded_python(self) -> str:
-        data = rs.read_json(self.GSV_python_embedded_path, [])
-        if data and len(data) == 2:
-            python_embedded_path = os.path.join(data[0], "python")
+        python_path = self.get_GSV_python_embedded_path()
+        if python_path:
+            python_embedded_path = os.path.join(python_path, "python")
             return python_embedded_path
         return None
 
@@ -290,9 +221,29 @@ class GSVSetting:
 
     # 获取GSV的API配置文件
     def get_GSV_api_config(self) -> dict:
-        data = rs.read_json(self.GSV_api_config_path, {})
-        if data:
-            return data
+        api_config = rs.read_json(self.GSV_api_config_path, {})
+        if api_config:
+            # 对一些数据进行处理
+            if not os.path.exists(api_config.get("api_file_path")):
+                api_config["api_file_path"] = ""
+            if not api_config.get("address"):
+                api_config["address"] = "127.0.0.1"
+            if not api_config.get("port"):
+                api_config["port"] = 9880
+            if api_config.get("device") not in ["cpu", "cuda", ""]:
+                api_config["device"] = ""
+            if api_config.get("precision") not in ["fp", "hp", ""]:
+                api_config["precision"] = ""
+
+            api_config["stream_mode"] = "close"
+            api_config["media_type"] = "wav"
+
+            if api_config.get("hubert_path") == None:
+                api_config["hubert_path"] = ""
+            if api_config.get("bert_path") == None:
+                api_config["bert_path"] = ""
+            self.save_GSV_api_config(api_config)
+            return api_config
         GSV_path = rs.read_txt(self.GSV_path)
         if GSV_path:
             self.save_api_default_setting()
@@ -358,12 +309,12 @@ class GSVSetting:
 
     # 获取所有正在使用的模型
     def get_all_use_GSV_model_data(self) -> list:
-        all_model = rs.read_json(self.GSV_model_data_config_path, [])
+        all_model = rs.read_json(self.GSV_model_data_config_path, {})
         return list(all_model.keys()) if all_model else []
 
     # 获取所有情感
     def get_all_emotion(self, model_name) -> list:
-        all_model_data = rs.read_json(self.GSV_model_data_config_path, [])
+        all_model_data = rs.read_json(self.GSV_model_data_config_path, {})
         if all_model_data:
             model_data = all_model_data.get(model_name, {})
             return list(model_data.get("audio_data", {}).keys())
@@ -482,3 +433,37 @@ class GSVSetting:
             "illation_num_input": illation_num_input,
         }
         rs.save_json(self.last_use_text, data)
+
+    # 获取情感的参考音频数据
+    def get_emotion_data(self, model_name, emotion):
+        model_data = self.get_GSV_model_data(model_name)
+        if model_data:
+            audio_data = model_data.get("audio_data", {})
+            if emotion in audio_data and len(audio_data[emotion]) == 3:
+                refer_wav_path = os.path.abspath(audio_data[emotion][0])
+                prompt_text = audio_data[emotion][1]
+                prompt_language = audio_data[emotion][2]
+                return refer_wav_path, prompt_text, prompt_language
+        return None, None, None
+
+    # 获取文件名储存格式
+    def get_filename(self, txt: str) -> str:
+        # 获取当前时间戳
+        timestamp = str(int(time.time()))
+        # 如果txt是多行文本，合并为一行
+        txt = txt.replace("\n", "_")
+        txt = re.sub(r'[\\/:*?"<>|]', "_", txt)
+        # 多余的字符用省略号代替
+        if len(txt) > main_setting.max_prefix_length:
+            # 文件名中加入时间戳，确保每次都不同
+            return timestamp + "_" + txt[: main_setting.max_prefix_length] + "..."
+        else:
+            return timestamp + "_" + txt
+
+    # 获取API的http地址
+    def get_api_http_address(self):
+        data = self.get_GSV_api_config()
+        if data:
+            return f"http://{data.get('address', '127.0.0.1')}:{data.get('port', 9880)}"
+        else:
+            return f"http://127.0.0.1:9880"

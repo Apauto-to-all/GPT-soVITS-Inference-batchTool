@@ -9,11 +9,18 @@
       - [安装依赖](#安装依赖)
       - [运行](#运行)
   - [详细介绍所有功能](#详细介绍所有功能)
-    - [设置推理参数](#设置推理参数)
-    - [开始批量抽卡页面](#开始批量抽卡页面)
+    - [设置GPT-soVITS-Inference推理参数](#设置gpt-sovits-inference推理参数)
+    - [GPT-soVITS-Inference开始批量抽卡页面](#gpt-sovits-inference开始批量抽卡页面)
       - [音频文件格式](#音频文件格式)
     - [设置页面](#设置页面)
     - [使用项目进行管理](#使用项目进行管理)
+    - [使用GPT-soVITS进行批量推理](#使用gpt-sovits进行批量推理)
+      - [1. 设置GPT-soVITS的项目文件夹和Python环境](#1-设置gpt-sovits的项目文件夹和python环境)
+      - [2. 设置API启动参数](#2-设置api启动参数)
+      - [3. 添加GPT-soVITS模型和参考音频](#3-添加gpt-sovits模型和参考音频)
+      - [4. 设置推理参数](#4-设置推理参数)
+      - [5. 启动GPT-soVITS的API文件](#5-启动gpt-sovits的api文件)
+      - [6. 开始使用GPT-soVITS进行批量推理](#6-开始使用gpt-sovits进行批量推理)
   - [许可证](#许可证)
   - [常见问题（FAQ）](#常见问题faq)
   - [后续计划](#后续计划)
@@ -24,7 +31,7 @@
 
 显然，手动点击的方式不够高效，这个工具就是为了解决这个问题而设计的，可以实现十连抽，二十连抽……
 
-适用于GPT-soVITS-Inference第三方推理包，注意与GPT-soVITS的区别，GPT-soVITS-Inference是基于GPT-soVITS开发的，专注于推理的前后端语音合成项目
+可以用于GPT-soVITS和GPT-soVITS-Inference（基于GPT-soVITS开发的，专注于推理的前后端语音合成的第三方推理包）
 
 > GPT-soVITS : [项目地址](https://github.com/RVC-Boss/GPT-SoVITS) , [中文指南](https://www.yuque.com/baicaigongchang1145haoyuangong/ib3g1e)
 >
@@ -34,17 +41,17 @@
 
 ## 功能简介
 
-本项目使用了`gradio`包，依赖于`GPT-soVITS-Inference`的API接口，提供了一个简单的前端页面，用于设置推理的参数，以及推理的文本，支持多次推理，最高支持20连抽，将所有结果展示在页面上，供用户选择。生成的所有音频文件都可以通过项目进行管理，将筛选出的音频文件保存到项目文件夹中，方便管理
+本项目使用了`gradio`包，提供了一个简单的前端页面，用于设置推理的参数，以及推理的文本，支持多次推理，最高支持20连抽，将所有结果展示在页面上，供用户选择。生成的所有音频文件都可以通过项目进行管理，将筛选出的音频文件保存到项目文件夹中，方便管理
 
 ![alt text](show/image-1-2.png)
 
 ## 如何使用本项目？
 
-该项目只在Windows11 x64位的系统上测试过，其他系统未测试，不保证能正常运行
+大概只能在Windows系统上运行
 
 ### 使用整合包
 
-整合包只适用于Windows x64位的系统，Linux和MacOS用户请手动搭建环境
+整合包只适用于Windows x64位的系统
 
 本项目的环境搭建过程很简单，但考虑到一些小白用户，我做了一个整合包，将其上传到一些网盘
 
@@ -78,11 +85,15 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 #### 运行
 
-首先需要**启动GPT-soVITS-Inference的后端服务**，然后运行`main.py`，否则程序无法正常运行
+```shell
+python main.py
+```
 
 ## 详细介绍所有功能
 
-### 设置推理参数
+### 设置GPT-soVITS-Inference推理参数
+
+使用前，需要手动启动`GPT-soVITS-Inference`的API接口，然后在页面上设置推理参数
 
 `GPT-soVITS-Inference`的API接口可以设置不少推理用的参数，本项目支持设置大部分参数，这里不进行一一例举，具体的参数设置可以在`GPT-soVITS`和`GPT-soVITS-Inference`的文档中查看
 
@@ -92,7 +103,7 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 每修改一个参数，都会自动保存到本地，下次打开页面时，会自动加载上次的设置
 
-### 开始批量抽卡页面
+### GPT-soVITS-Inference开始批量抽卡页面
 
 设置好参数后，切换到`开始抽卡`页面
 
@@ -144,6 +155,44 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 目前项目的功能就这么多，后续会添加更多的功能的，敬请期待……
 
+### 使用GPT-soVITS进行批量推理
+
+这是`v2.0.0`版本新增的功能，支持使用GPT-soVITS进行批量推理，基于GPT-soVITS项目的api.py文件进行的批量推理，使用过程分为几步
+
+#### 1. 设置GPT-soVITS的项目文件夹和Python环境
+
+`设置`->`GPT-soVITS设置`->`选择目录和Python环境`中选择GPT-soVITS项目的根目录和Python环境
+![alt text](show\image1-1-1.png)
+
+#### 2. 设置API启动参数
+
+`设置`->`GPT-soVITS设置`->`API设置`中设置API的启动参数，包括`API地址`和`API端口`
+![alt text](show\image123.png)
+
+#### 3. 添加GPT-soVITS模型和参考音频
+
+首先，需要在model文件夹下创建一个文件夹，文件名为模型的名字，然后在文件夹中放入**GPT模型**、**SoVITS模型**和**一些参考音频**
+
+回到页面，在`GPT-soVITS模型管理界面`中，重新加载模型，选择目标模型，会自动加载模型文件夹中的模型和参考音频，你需要选择正确的**GPT模型**和**SoVITS模型**，为参考音频一一添加**感情**，**参考文字**和**参考音频语言**，如果你不需要某条参考音频，可以保持该参考音频的**感情**为空，最后点击`保存`按钮
+
+![alt text](show\image09jd.png)
+
+#### 4. 设置推理参数
+
+这个功能与GPT-soVITS-Inference的设置推理参数功能类似，由于GPT-soVITS的api.py文件中提供的可设置参数不多，所以这里只提供了`情感`、`top_k`、`top_p`、`temperature`和`speed`这几个参数。不多说，直接上图
+
+![alt text](show\gsv1.png)
+
+#### 5. 启动GPT-soVITS的API文件
+
+之前已经设置了GPT-soVITS的项目位置和python环境，最主要的目的是使用python环境运行api.py文件
+
+在设置GPT-soVITS的推理参数页面中，在选择模型和情感左边，提供了一个`启动API`按钮，点击后，会弹出一个新的终端窗口，使用python环境运行api.py文件，这个终端窗口不要关闭，否则后续使用GPT-soVITS进行推理会失败
+
+#### 6. 开始使用GPT-soVITS进行批量推理
+
+启动好API后，切换到`GPT-soVITS抽卡`页面，输入**需要推理的文本**，选择**推理语言**，选择**切割文本方式**，再设置**推理次数**，最后点击**抽卡**按钮，程序会使用前面设置的参数生成多个（随机）结果，发送到API接口，进行推理，每推理一次，在页面上显示一条音频结果，直到全部结果推理完毕。其他功能与之前的使用GPT-soVITS-Inference的功能类似，不再赘述
+
 ## 许可证
 
 本程序遵循 [MIT 许可证](https://opensource.org/license/mit/)。
@@ -161,5 +210,4 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 - [x] 推理参数写入wav文件的元数据，支持读取
 - [x] 使用项目进行管理，将筛选出的音频文件保存到项目文件夹中，方便管理
 - [ ] 实现查看音频元数据的页面
-
-……
+- [x] 实现直接对GPT-soVITS进行批量推理

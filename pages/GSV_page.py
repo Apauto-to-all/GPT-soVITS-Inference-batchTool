@@ -21,7 +21,7 @@ class GSVPage(GSV_utils.GSVUtils):
         #     variant="primary",
         #     size="sm",
         # )
-        with gr.Tab(label="GPT-soVITS设置"):
+        with gr.Tab(label="选择目录和Python环境"):
             gr.Markdown("### 选择GPT-soVITS目录与Python环境")
             with gr.Row():
                 # 选择GSV文件夹路径
@@ -73,7 +73,7 @@ class GSVPage(GSV_utils.GSVUtils):
                 self.reload_GSV_path_python,
                 outputs=[GSV_path_input, python_embedded_path_input],
             )
-        with gr.Tab(label="GPT-soVITS的API设置"):
+        with gr.Tab(label="API设置"):
             with gr.Column():
                 gr.Markdown("### GPT-soVITS的API设置，刷新页面查看最新设置")
                 with gr.Row():

@@ -182,3 +182,24 @@ class SettingPage(LinkPages):
                 ),
                 interactive=False,
             )
+
+    def showPageSetting(self, demo: gr.Blocks):
+        gr.Markdown(
+            "### 页面设置，勾选你需要的页面，主要分为GPT-soVITS页面，和GPT-soVITS-Inference（基于GPT-soVITS开发的第三方推理包）页面。"
+        )
+        # 显示设置
+        with gr.Row():
+            is_show_GPT_soVITS = gr.Checkbox(
+                label="是否使用GPT-soVITS进行批量推理",
+                info="如果取消勾选，将不再显示有关GPT-soVITS的页面",
+                value=True,
+                interactive=True,
+            )
+
+        with gr.Row():
+            is_show_GSV_inference = gr.Checkbox(
+                label="是否使用GPT-soVITS-Inference进行批量推理",
+                info="如果取消勾选，将不再显示有关GPT-soVITS-Inference的页面",
+                value=True,
+                interactive=True,
+            )

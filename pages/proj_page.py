@@ -36,6 +36,9 @@ class ProjPage(LinkPages):
             sub_project_path = self.proj_mgmt_utils.proj_setting.get_sub_project_path(
                 project_collection, sub_project
             )
+            if not sub_project_path:
+                gr.Warning(f"项目路径不存在，请检查")
+                return
             if not os.path.exists(sub_project_path) and not os.path.isdir(
                 sub_project_path
             ):

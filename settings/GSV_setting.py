@@ -1,8 +1,6 @@
 # 适配GSV的api
 import os
-import re
 import sys
-import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -66,6 +64,8 @@ class GSVSetting:
         self.last_use_text = os.path.join(config.config_last_data_GSV, "last_text.json")
         # 显示默认文件夹
         self.temp_folder = config.temp_folder
+        # 最长文件名前缀
+        self.max_prefix_length = main_setting.max_prefix_length
         # 显示音频数量
         self.show_audio_num = 10
 
@@ -445,20 +445,6 @@ class GSVSetting:
                 prompt_language = audio_data[emotion][2]
                 return refer_wav_path, prompt_text, prompt_language
         return None, None, None
-
-    # 获取文件名储存格式
-    def get_filename(self, txt: str) -> str:
-        # 获取当前时间戳
-        timestamp = str(int(time.time()))
-        # 如果txt是多行文本，合并为一行
-        txt = txt.replace("\n", "_")
-        txt = re.sub(r'[\\/:*?"<>|]', "_", txt)
-        # 多余的字符用省略号代替
-        if len(txt) > main_setting.max_prefix_length:
-            # 文件名中加入时间戳，确保每次都不同
-            return timestamp + "_" + txt[: main_setting.max_prefix_length] + "..."
-        else:
-            return timestamp + "_" + txt
 
     # 获取API的http地址
     def get_api_http_address(self):

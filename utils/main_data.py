@@ -46,20 +46,6 @@ class MainData(LinkUtils):
                 break
             yield wav_file_path  # 返回音频文件路径
 
-    # 获取文件名储存格式
-    def get_filename(self, txt: str) -> str:
-        # 获取当前时间戳
-        timestamp = str(int(time.time()))
-        # 如果txt是多行文本，合并为一行
-        txt = txt.replace("\n", "_")
-        txt = re.sub(r'[\\/:*?"<>|]', "_", txt)
-        # 多余的字符用省略号代替
-        if len(txt) > self.main_setting.max_prefix_length:
-            # 文件名中加入时间戳，确保每次都不同
-            return timestamp + "_" + txt[: self.main_setting.max_prefix_length] + "..."
-        else:
-            return timestamp + "_" + txt
-
     # 获取配置储存最后的模型
     def get_last_model(self, all_models):
         if os.path.exists(self.main_setting.last_model_path):
@@ -232,9 +218,12 @@ class MainData(LinkUtils):
 
     # 发送post请求
     def post_txt(self, txt, mode_name, random_dict):
+        from share_utils import get_filename
+
         # 获取文件名，用于保存wav文件
         outputFilePath = os.path.join(
-            self.main_setting.temp_folder, f"{self.get_filename(txt)}.wav"
+            self.main_setting.temp_folder,
+            f"{get_filename(txt,self.main_setting.max_prefix_length)}.wav",
         )
         # txt转url编码
         txt = requests.utils.quote(txt)

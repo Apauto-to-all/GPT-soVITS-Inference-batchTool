@@ -484,6 +484,8 @@ class GSVUtils(GSV_setting.GSVSetting):
 
     # 推理获取结果
     async def interface(self, model_name):
+        from share_utils import get_filename
+
         last_save_text = self.get_last_save_text()
         model_data = self.get_GSV_inference_setting(model_name)
         txt = last_save_text.get("txt_input")
@@ -493,7 +495,9 @@ class GSVUtils(GSV_setting.GSVSetting):
         )  # 生成多个推理结果
         self.post_set_model(model_name)  # 切换模型
         for selected_result in random_results:
-            file_path = os.path.join(self.temp_folder, f"{self.get_filename(txt)}.wav")
+            file_path = os.path.join(
+                self.temp_folder, f"{get_filename(txt,self.max_prefix_length)}.wav"
+            )
             # 对每个推理结果发送请求并保存音频文件，收集所有文件的路径
             wav_file_path = self.post_txt(
                 selected_result, file_path

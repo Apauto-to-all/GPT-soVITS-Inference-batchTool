@@ -1,3 +1,5 @@
+
+
 # GPT-soVITS-Inference批量抽卡工具
 
 - [GPT-soVITS-Inference批量抽卡工具](#gpt-sovits-inference批量抽卡工具)
@@ -153,7 +155,7 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ## 常见问题（FAQ）
 
 - API接口地址，默认是`http://127.0.0.1:5000`，程序默认地址是`http://127.0.0.1:7861`
-- 如果要修改API接口地址和程序默认地址，可以根据`设置页面`的提示，在 `config\settings\main_data.json` 中修改（需要**运行一次**程序**自动生成**配置文件后才能修改）
+- 如果要修改API接口地址和程序默认地址，可以根据`设置页面`的提示，在 `config/settings/main_data.json` 中修改（需要**运行一次**程序**自动生成**配置文件后才能修改）
 
 ## 后续计划
 
